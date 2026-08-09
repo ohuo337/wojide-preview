@@ -327,20 +327,14 @@
   .promise-row .pi { font-size: 24px; margin-right: 12px; }
   .promise-row b { font-size: 14px; }
   .link { text-align: center; color: var(--primary); font-size: 13px; margin-top: 22px; cursor: pointer; }
-  .ad-placeholder { border: 2px dashed var(--line); border-radius: 14px; color: var(--text-sub); font-size: 11px; text-align: center; padding: 16px 0; margin: 14px 0; background: rgba(255,255,255,.4); }
   .splash-overlay { position: absolute; inset: 0; background: var(--bg); z-index: 70; display: none; flex-direction: column; align-items: center; justify-content: center; }
   .splash-overlay.show { display: flex; }
   .splash-logo { font-size: 64px; }
   .splash-name { font-size: 26px; font-weight: 700; letter-spacing: 4px; margin: 14px 0 8px; }
   .splash-slogan { font-size: 13px; color: var(--text-sub); margin-bottom: 12px; }
-  .splash-ad-box { position: absolute; left: 24px; right: 24px; bottom: 70px; border: 2px dashed var(--line); border-radius: 14px; color: var(--text-sub); font-size: 12px; text-align: center; padding: 22px 0; background: rgba(255,255,255,.4); }
+  .splash-notice { position: absolute; left: 24px; right: 24px; bottom: 70px; border: 1px solid var(--line); border-radius: 14px; color: var(--text-sub); font-size: 12px; text-align: center; padding: 16px 0; background: rgba(255,255,255,.55); }
   .splash-skip { position: absolute; top: 34px; right: 16px; border: 0; background: rgba(255,255,255,.75); color: var(--text-sub); border-radius: 999px; padding: 6px 14px; font-size: 12px; cursor: pointer; }
   .limit-actions { display: flex; gap: 10px; margin-top: 12px; }
-  .ad-overlay { position: absolute; inset: 0; background: rgba(20,16,12,.88); z-index: 75; display: none; flex-direction: column; align-items: center; justify-content: center; }
-  .ad-overlay.show { display: flex; }
-  .ad-box { width: 300px; background: var(--card); border-radius: 16px; text-align: center; padding: 36px 20px; font-size: 14px; color: var(--text); }
-  .ad-box .cnt { font-size: 30px; font-weight: 700; color: var(--primary); margin-top: 10px; }
-  .ad-close { margin-top: 18px; color: #CFC7B8; font-size: 12px; cursor: pointer; }
 
   /* 投诉 */
   .complain-field { margin-bottom: 14px; }
@@ -402,7 +396,7 @@
       <div class="splash-name">我记得</div>
       <div class="splash-slogan">熟悉语气，也记得共同经历</div>
       <span class="ai-tag">AI 生成 · 非真实人物</span>
-      <div class="splash-ad-box">仅限18岁以上用户 · 封闭测试</div>
+      <div class="splash-notice">仅限18岁以上用户 · 封闭测试</div>
       <button class="splash-skip" onclick="hideSplash()">跳过 <span id="splashCount">3</span>s</button>
     </div>
 
@@ -606,16 +600,6 @@
       </div>
     </div>
 
-    <!-- 激励视频广告（模拟） -->
-    <div class="ad-overlay" id="adOverlay">
-      <div class="ad-box">
-        <div>🎬 激励视频广告（模拟）</div>
-        <div class="cnt" id="adCount">3</div>
-        <div class="sub" style="margin-top:8px">看完即可恢复 5 次对话</div>
-      </div>
-      <button class="ad-close" onclick="closeAd()">关闭</button>
-    </div>
-
     <div id="toast"></div>
   </div>
 
@@ -657,38 +641,12 @@
         id: 'r2', name: '阿澈', emoji: '🌙',
         tags: ['理性冷静', '慢热'],
         summary: '话不多，但句句接得住。',
-        opening: '嗯，我在听，你继续说。',
+        opening: '刚看到消息。你今天过得怎么样？',
         memories: ['你养了一只叫团子的猫'],
         messages: []
       }
     ]
   };
-
-  const REPLIES = [
-    { test: /准备发什么|想发什么|发什么/, reply:'想问你忙完没。结果你倒先来找我了。' },
-    { test: /想你|想我/, reply:'看出来了，半夜还来报到。今天是受委屈了，还是单纯想我？' },
-    { test: /在吗|在不在/, reply:'在。怎么这么晚还没睡？' },
-    { test: /记得|上次|书店|咖啡/, reply:'记得呀，上回说好周末去那家新书店的。你不会想放我鸽子吧？' },
-    { test: /加班|累|辛苦|忙|饿/, reply:'又忙到现在？先去吃点东西。工作没做完可以明天接着做，人别先熬坏了。' },
-    { test: /周末|去哪|出去/, reply:'去上次说的那家书店吧。逛完再去河边走一圈，你不是一直惦记着吗？' },
-    { test: /难过|委屈|烦|崩溃/, reply:'先别硬撑。是今天发生了什么，还是那件事又让你不舒服了？' },
-    { test: /哈哈|笑死|好笑/, reply:'看把你乐的。说吧，谁又干了什么离谱事？' }
-  ];
-
-  function pickReply(text, role){
-    const normalized = String(text || '').trim();
-    for (const r of REPLIES) if (r.test.test(normalized)) return r.reply;
-    if (/[？?]$|^(为什么|怎么|什么|哪|谁|能不能|是不是)/.test(normalized)) {
-      return '你问得太省略了。把前面那件事带一句，我才能认真回答你。';
-    }
-    const fallbacks = [
-      '这句听着有后续。然后呢，最让你在意的是哪一段？',
-      '我大概懂你的意思了。你现在更想让我安慰你，还是一起想办法？',
-      '行，这件事我站你这边。先告诉我，刚才具体发生了什么？'
-    ];
-    const seed = Array.from(normalized).reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
-    return fallbacks[seed % fallbacks.length];
-  }
 
   function parseLog(text){
     const lines = String(text || '').split(/\n/);
@@ -1040,7 +998,7 @@
   function renderRoles(){
     const box = $('roles-body');
     if (!state.roles.length){
-      box.innerHTML = '<div class="empty-box"><div class="e-emoji">🌱</div><div>还没有角色</div><p class="sub">上传聊天记录，生成第一位懂你的 AI 伙伴</p><button class="btn btn-primary" style="width:auto;padding:10px 30px" onclick="go(\'create\')">创建第一个角色</button><div class="ad-placeholder">Banner 广告位（预留）</div></div>';
+      box.innerHTML = '<div class="empty-box"><div class="e-emoji">🌱</div><div>还没有角色</div><p class="sub">上传聊天记录，生成第一位懂你的 AI 伙伴</p><button class="btn btn-primary" style="width:auto;padding:10px 30px" onclick="go(\'create\')">创建第一个角色</button></div>';
       return;
     }
     let html = '';
@@ -1054,7 +1012,6 @@
       html += '</div>';
     });
     html += '<button class="btn btn-ghost" onclick="go(\'create\')" style="margin-top:6px">＋ 创建新角色</button>';
-    html += '<div class="ad-placeholder">Banner 广告位（预留）</div>';
     box.innerHTML = html;
   }
 
@@ -1152,19 +1109,19 @@
     $('chatInputBar').classList.toggle('has-text', Boolean(input.value.trim()));
   }
 
-  const AI_API_BASE = 'https://f085733cb64d6a.lhr.life';
-
-  function getDemoSessionId(){
-    const key = 'wojide_demo_session';
-    let id = localStorage.getItem(key);
-    if (!id){
-      id = 'web-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
-      localStorage.setItem(key, id);
-    }
-    return id;
-  }
+  // GitHub Pages 只负责静态分享页；AI 始终走持久云端，避免依赖测试电脑在线。
+  const AI_API_BASE = location.hostname === 'ohuo337.github.io'
+    ? 'https://wojide-ai-beta.aydenkela21.chatgpt.site'
+    : '';
 
   async function requestAiReply(text){
+    const role = getRole();
+    const history = role
+      ? role.messages.slice(0, -1).slice(-12).map((message) => ({
+          sender: message.s === 'user' ? 'user' : 'assistant',
+          content: message.t
+        }))
+      : [];
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 60000);
     try {
@@ -1174,7 +1131,7 @@
           'Content-Type': 'application/json',
           'Bypass-Tunnel-Reminder': 'true'
         },
-        body: JSON.stringify({ sessionId: getDemoSessionId(), content: text }),
+        body: JSON.stringify({ content: text, history }),
         signal: controller.signal
       });
       const result = await response.json();
@@ -1224,7 +1181,7 @@
     $('plusMenu').classList.toggle('hidden');
   }
 
-  function sendSpecial(type, amt){
+  async function sendSpecial(type, amt){
     $('plusMenu').classList.add('hidden');
     const role = getRole();
     if (!role || state.typing) return;
@@ -1233,43 +1190,21 @@
     role.messages.push({ s:'user', type, t: display, m: fmtTime() });
     state.typing = true;
     renderChat();
-    setTimeout(() => {
+    try {
+      const prompt = type === 'transfer'
+        ? `[模拟互动：用户向你发送了 ¥${amt} 的转账，不涉及真实资金]`
+        : `[模拟互动：用户向你发送了一个红包，不涉及真实资金]`;
+      const result = await requestAiReply(prompt);
       state.typing = false;
       if (!state.member) state.usageLeft = Math.max(0, state.usageLeft - 1);
-      role.messages.push({
-        s:'ai',
-        t: type === 'transfer'
-          ? '怎么突然给我转账，是不是又偷偷加班了？心意收到，先帮你存着。'
-          : '谢谢你，心意收到啦，回头请你喝奶茶。',
-        m: fmtTime()
-      });
+      role.messages.push({ s:'ai', t:result.reply, m:fmtTime() });
       renderChat();
-    }, 1700);
-  }
-
-  function simulateReward(){
-    const o = $('adOverlay');
-    let left = 3;
-    $('adCount').textContent = left;
-    o.classList.add('show');
-    clearInterval(state._rewardTimer);
-    state._rewardTimer = setInterval(() => {
-      left -= 1;
-      if (left <= 0){
-        clearInterval(state._rewardTimer);
-        o.classList.remove('show');
-        state.usageLeft += 5;
-        renderChat();
-        toast('已恢复 5 次');
-      } else {
-        $('adCount').textContent = left;
-      }
-    }, 1000);
-  }
-
-  function closeAd(){
-    clearInterval(state._rewardTimer);
-    $('adOverlay').classList.remove('show');
+    } catch (error) {
+      state.typing = false;
+      role.messages.push({ s:'ai', t:'真实 AI 服务暂时没有返回，请稍后重试。', m:fmtTime() });
+      renderChat();
+      toast(error && error.message ? error.message : 'DeepSeek 暂时不可用');
+    }
   }
 
   function hideSplash(){
@@ -1428,7 +1363,7 @@
       state.fileName = '聊天记录.txt';
     }
   }
-  // 开屏广告（模拟）：每次会话首次进入展示，?splash=1 可强制展示
+  // 封闭测试开屏说明：每次会话首次进入展示，?splash=1 可强制展示
   if (qp.get('splash') === '1' || !sessionStorage.getItem('jide_splash_seen')) {
     sessionStorage.setItem('jide_splash_seen', '1');
     let left = 3;
