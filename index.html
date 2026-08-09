@@ -207,7 +207,6 @@
   .msg-row.ai .bubble { background: var(--bubble-ai); border: 1px solid var(--bubble-border); border-top-left-radius: 4px; }
   .msg-row.user .bubble { background: var(--bubble-user); border-top-right-radius: 4px; }
   .msg-meta { font-size: 10px; color: var(--chat-sub); margin-top: 5px; display: flex; gap: 8px; align-items: center; }
-  .mem-btn { border: 0; background: transparent; color: var(--chat-sub); font-size: 10px; cursor: pointer; padding: 0; }
   .typing-bubble { display: flex; align-items: center; min-width: 64px; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--chat-sub); margin: 0 3px; animation: blink 1.2s infinite; }
   .dot:nth-child(2) { animation-delay: .2s; }
@@ -1097,7 +1096,7 @@
       } else {
         html += m.t;
       }
-      html += '</div><div class="msg-meta"><span>'+m.m+'</span><button class="mem-btn" onclick="saveMemory('+idx+')">☆ 存记忆</button></div></div>';
+      html += '</div><div class="msg-meta"><span>'+m.m+'</span></div></div>';
       if (m.s === 'user') html += state.myAvatar ? '<img class="avatar u img" src="'+state.myAvatar+'">' : '<div class="avatar u">我</div>';
       html += '</div>';
     });
@@ -1246,22 +1245,6 @@
     const menu = $('plusMenu');
     if (menu && !menu.contains(e.target) && !e.target.classList.contains('plus-btn')) menu.classList.add('hidden');
   });
-
-  function saveMemory(idx){
-    const role = getRole();
-    const msg = role.messages[idx];
-    if (!msg) return;
-    showModal({
-      title: '补充记忆',
-      okText: '记住',
-      cancelText: '取消',
-      body: '把「'+msg.t.slice(0,20)+'…」存进角色记忆？角色之后会在聊天中自然提起。',
-      onOk: () => {
-        role.memories.push(msg.t.slice(0,30));
-        toast('已记住');
-      }
-    });
-  }
 
   /* ---------- 我的 ---------- */
   function renderProfile(){
