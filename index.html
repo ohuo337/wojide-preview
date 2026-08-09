@@ -233,6 +233,52 @@
   .redpacket-card { background: #FCE9D8; border-radius: 10px; padding: 8px 12px; min-width: 120px; }
   .redpacket-title { font-size: 12px; font-weight: 600; color: #C97B4A; }
   .redpacket-sub { font-size: 10px; color: #B58A62; margin-top: 2px; }
+
+  /* 微信式聊天界面 */
+  .navbar.wechat-chat-nav { background: #EDEDED; border-bottom-color: #D8D8D8; }
+  .stage.wechat-stage .statusbar { background: #EDEDED; color: #111; }
+  .navbar.wechat-chat-nav .title { font-size: 17px; font-weight: 500; color: #111; }
+  .navbar.wechat-chat-nav .title::after { content: "AI"; display: inline-block; margin-left: 5px; padding: 0 3px; border: 1px solid #B8B8B8; border-radius: 3px; color: #8A8A8A; font-size: 8px; line-height: 13px; vertical-align: 2px; }
+  .navbar.wechat-chat-nav .right { color: #111; font-size: 22px; letter-spacing: 2px; }
+  #page-chat, #page-chat.theme-warm, #page-chat.theme-dark, #page-chat.theme-mint {
+    --chat-bg: #EDEDED;
+    --chat-header: #F7F7F7;
+    --chat-sub: #B2B2B2;
+    --bubble-ai: #FFFFFF;
+    --bubble-user: #95EC69;
+    --bubble-border: #DADADA;
+    --chat-text: #111111;
+    background: #EDEDED;
+    color: #111111;
+  }
+  #page-chat .chat-msgs { padding: 14px 12px 10px; }
+  #page-chat .msg-row { align-items: flex-start; margin-bottom: 18px; }
+  #page-chat .avatar { width: 40px; height: 40px; border: 0; border-radius: 4px; background: #FFFFFF; margin-right: 10px; font-size: 22px; }
+  #page-chat .avatar.u { margin: 0 0 0 10px; border-radius: 4px; background: #6D8F60; font-size: 12px; }
+  #page-chat .bubble-wrap { max-width: 70%; }
+  #page-chat .bubble { position: relative; padding: 9px 12px; border-radius: 5px; font-size: 16px; line-height: 1.5; color: #111; word-break: break-word; }
+  #page-chat .msg-row.ai .bubble { border: .5px solid #DADADA; border-radius: 5px; background: #FFFFFF; }
+  #page-chat .msg-row.user .bubble { border: .5px solid #85D963; border-radius: 5px; background: #95EC69; }
+  #page-chat .msg-row.ai .bubble::before { content: ""; position: absolute; left: -7px; top: 12px; width: 12px; height: 12px; background: #FFFFFF; border-left: .5px solid #DADADA; border-bottom: .5px solid #DADADA; transform: rotate(45deg); }
+  #page-chat .msg-row.user .bubble::after { content: ""; position: absolute; right: -7px; top: 12px; width: 12px; height: 12px; background: #95EC69; border-right: .5px solid #85D963; border-top: .5px solid #85D963; transform: rotate(45deg); }
+  #page-chat .wechat-time { clear: both; margin: 4px 0 18px; color: #A5A5A5; font-size: 11px; line-height: 1; text-align: center; }
+  #page-chat .msg-meta { display: none; }
+  #page-chat .opening-card { margin: 0; }
+  #page-chat .opening-bubble, #page-chat .quick-title, #page-chat .quick-chips { display: none; }
+  #page-chat .chat-input { gap: 8px; padding: 8px 9px calc(8px + env(safe-area-inset-bottom)); background: #F7F7F7; border-top: .5px solid #D8D8D8; }
+  #page-chat .tool-btn { width: 30px; height: 34px; flex: 0 0 30px; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; color: #171717; padding: 0; cursor: pointer; }
+  #page-chat .tool-btn svg { width: 27px; height: 27px; stroke: currentColor; fill: none; stroke-width: 1.7; }
+  #page-chat .chat-input input { min-width: 0; height: 38px; box-sizing: border-box; padding: 7px 10px; border-radius: 5px; background: #FFFFFF; color: #111; font-size: 16px; }
+  #page-chat .chat-input .send { display: none; border-radius: 4px; padding: 8px 12px; background: #07C160; font-size: 14px; }
+  #page-chat .chat-input.has-text .send { display: block; }
+  #page-chat .chat-input.has-text .emoji-btn, #page-chat .chat-input.has-text .plus-btn { display: none; }
+  #page-chat .plus-menu { right: 10px; bottom: 64px; border-color: #D8D8D8; border-radius: 6px; background: #F7F7F7; box-shadow: 0 5px 16px rgba(0,0,0,.16); }
+  #page-chat .typing-bubble { min-width: 54px; }
+  #page-chat .transfer-card { margin: -9px -12px; padding: 13px 15px; border-radius: 5px; background: #FA9D3B; color: #fff; }
+  #page-chat .msg-row.user .transfer-bubble { border-color: #E58C30; background: #FA9D3B; }
+  #page-chat .msg-row.user .transfer-bubble::after { border-color: #E58C30; background: #FA9D3B; }
+  #page-chat .transfer-title, #page-chat .transfer-amount, #page-chat .transfer-sub { color: #fff; }
+  #page-chat .transfer-sub { opacity: .8; }
   .stats-panel { background: #F1EADF; border-radius: 10px; padding: 10px; margin: 8px 0 12px; }
   .stats-row { display: flex; }
   .stat { flex: 1; text-align: center; }
@@ -400,18 +446,12 @@
 
       <!-- 聊天 -->
       <section class="page" id="page-chat">
-        <div class="chat-header">
-          <div class="l"><img class="he img" id="chat-avatar" style="display:none"><span class="he" id="chat-emoji">🌻</span><span class="hn" id="chat-name">小满</span></div>
-          <div class="right">
-            <span class="ai-tag">AI 角色</span>
-            <span class="usage-chip" id="chat-usage">今日 18/20</span>
-            <button class="theme-btn" id="themeBtn" onclick="switchTheme()">暖阳</button>
-          </div>
-        </div>
         <div class="chat-msgs" id="chat-msgs"></div>
-        <div class="chat-input">
-          <button class="plus-btn" onclick="event.stopPropagation();openPlusMenu()">＋</button>
-          <input id="chat-input" placeholder="说点什么…" onkeydown="if(event.key==='Enter')sendChat()">
+        <div class="chat-input" id="chatInputBar">
+          <button class="tool-btn voice-btn" aria-label="语音"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12"></circle><path d="M12 16c0 3 1.8 5 4 5s4-2 4-5v-4c0-2.2-1.8-4-4-4s-4 1.8-4 4v4zm-3 0c0 4.4 3.1 8 7 8m0 0v3m0-3c3.9 0 7-3.6 7-8"></path></svg></button>
+          <input id="chat-input" aria-label="消息" oninput="syncChatInput()" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="tool-btn emoji-btn" aria-label="表情"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12"></circle><circle cx="12" cy="13" r="1" fill="currentColor" stroke="none"></circle><circle cx="20" cy="13" r="1" fill="currentColor" stroke="none"></circle><path d="M11 19c1.5 2 3.1 3 5 3s3.5-1 5-3"></path></svg></button>
+          <button class="tool-btn plus-btn" aria-label="更多" onclick="event.stopPropagation();openPlusMenu()"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12"></circle><path d="M10 16h12M16 10v12"></path></svg></button>
           <button class="send" onclick="sendChat()">发送</button>
         </div>
         <div class="plus-menu hidden" id="plusMenu">
@@ -723,6 +763,9 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('page-' + id).classList.add('active');
     $('navTitle').textContent = TITLES[id];
+    document.querySelector('.navbar').classList.toggle('wechat-chat-nav', id === 'chat');
+    $('stage').classList.toggle('wechat-stage', id === 'chat');
+    $('navRight').textContent = id === 'chat' ? '•••' : '';
     $('navBack').style.visibility = TABS.indexOf(id) >= 0 ? 'hidden' : 'visible';
     $('tabbar').style.display = TABS.indexOf(id) >= 0 ? 'flex' : 'none';
     document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
@@ -1059,36 +1102,26 @@
     const role = getRole();
     if (!role) return;
     state.currentRole = role.id;
-    $('chat-emoji').textContent = role.emoji;
-    $('chat-name').textContent = role.name;
-    $('chat-usage').textContent = state.member ? '会员 · 500次/日' : '今日 ' + state.usageLeft + '/20';
-    $('page-chat').className = 'page active theme-' + state.theme;
-    $('themeBtn').textContent = ({warm:'暖阳',dark:'深空',mint:'薄荷'})[state.theme];
-    const avImg = $('chat-avatar');
-    const avText = $('chat-emoji');
-    if (role.avatarData){
-      avImg.src = role.avatarData;
-      avImg.style.display = '';
-      avText.style.display = 'none';
-    } else {
-      avImg.style.display = 'none';
-      avText.style.display = '';
-    }
+    $('navTitle').textContent = state.typing ? '对方正在输入…' : role.name;
+    $('page-chat').className = 'page active theme-warm';
     const aiAvatar = role.avatarData ? '<img class="avatar img" src="'+role.avatarData+'">' : '<div class="avatar">'+role.emoji+'</div>';
 
     const box = $('chat-msgs');
     let html = '';
     if (!role.messages.length){
-      html += '<div class="opening-card"><div class="opening-bubble">'+role.opening+'</div><div class="qt">和 TA 打个招呼吧</div><div class="quick-chips">';
-      ['最近过得怎么样？','还记得我们上次聊的事吗？','讲个今天的小事给我听吧'].forEach(q => {
-        html += `<span class="quick-chip" onclick="quickSend('${q}')">${q}</span>`;
-      });
-      html += '</div></div>';
+      html += '<div class="wechat-time">现在</div><div class="msg-row ai">'+aiAvatar+'<div class="bubble-wrap"><div class="bubble">'+role.opening+'</div></div></div>';
     }
-    role.messages.forEach((m, idx) => {
+    let lastTime = null;
+    role.messages.forEach((m) => {
+      const parts = String(m.m || '').split(':').map(Number);
+      const minute = parts.length === 2 ? parts[0] * 60 + parts[1] : null;
+      if (minute !== null && (lastTime === null || minute < lastTime || minute - lastTime >= 5)) {
+        html += '<div class="wechat-time">'+m.m+'</div>';
+      }
+      if (minute !== null) lastTime = minute;
       html += '<div class="msg-row ' + (m.s === 'user' ? 'user' : 'ai') + '">';
       if (m.s === 'ai') html += aiAvatar;
-      html += '<div class="bubble-wrap"><div class="bubble">';
+      html += '<div class="bubble-wrap"><div class="bubble'+(m.type === 'transfer' ? ' transfer-bubble' : '')+'">';
       if (m.type === 'transfer'){
         html += '<div class="transfer-card"><div class="transfer-title">微信转账</div><div class="transfer-amount">'+m.t+'</div><div class="transfer-sub">模拟互动 · 不涉及真实资金</div></div>';
       } else if (m.type === 'redpacket'){
@@ -1096,13 +1129,10 @@
       } else {
         html += m.t;
       }
-      html += '</div><div class="msg-meta"><span>'+m.m+'</span></div></div>';
+      html += '</div></div>';
       if (m.s === 'user') html += state.myAvatar ? '<img class="avatar u img" src="'+state.myAvatar+'">' : '<div class="avatar u">我</div>';
       html += '</div>';
     });
-    if (state.typing){
-      html += '<div class="msg-row ai">'+aiAvatar+'<div class="bubble typing-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
-    }
     if (state.usageLeft <= 0 && !state.member){
       html += '<div class="limit-banner"><p>今日免费对话次数已用完，明天再来，或申请体验会员</p><div class="limit-actions"><button class="btn btn-primary" style="flex:1;padding:9px 0;font-size:13px;margin:0" onclick="go(\'vip\')">申请体验</button></div></div>';
     }
@@ -1115,6 +1145,11 @@
     const input = $('chat-input');
     input.value = q;
     sendChat();
+  }
+
+  function syncChatInput(){
+    const input = $('chat-input');
+    $('chatInputBar').classList.toggle('has-text', Boolean(input.value.trim()));
   }
 
   const AI_API_BASE = 'https://f085733cb64d6a.lhr.life';
@@ -1163,6 +1198,7 @@
     const role = getRole();
     if (!role) return;
     input.value = '';
+    syncChatInput();
     role.messages.push({ s:'user', t:text, m:fmtTime() });
     state.typing = true;
     renderChat();
