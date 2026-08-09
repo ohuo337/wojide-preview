@@ -626,16 +626,29 @@
   };
 
   const REPLIES = [
-    { keys:['记得','上次','书店','咖啡'], reply:'记得呀，上回说好周末去那家新书店的，你可别放我鸽子。' },
-    { keys:['加班','累','辛苦','忙','饿'], reply:'辛苦了，先喝口水歇会儿。再忙也要记得吃饭，别学我。' },
-    { keys:['周末','去哪','出去'], reply:'周末去书店吧，看完书再去河边走走，你上次说想去的。' },
-    { keys:['想','在吗'], reply:'在呢，刚想给你发消息来着。' },
-    { keys:['哈哈','笑'], reply:'看把你乐的，行吧，这笑话能值一杯奶茶。' }
+    { test: /准备发什么|想发什么|发什么/, reply:'想问你忙完没。结果你倒先来找我了。' },
+    { test: /想你|想我/, reply:'看出来了，半夜还来报到。今天是受委屈了，还是单纯想我？' },
+    { test: /在吗|在不在/, reply:'在。怎么这么晚还没睡？' },
+    { test: /记得|上次|书店|咖啡/, reply:'记得呀，上回说好周末去那家新书店的。你不会想放我鸽子吧？' },
+    { test: /加班|累|辛苦|忙|饿/, reply:'又忙到现在？先去吃点东西。工作没做完可以明天接着做，人别先熬坏了。' },
+    { test: /周末|去哪|出去/, reply:'去上次说的那家书店吧。逛完再去河边走一圈，你不是一直惦记着吗？' },
+    { test: /难过|委屈|烦|崩溃/, reply:'先别硬撑。是今天发生了什么，还是那件事又让你不舒服了？' },
+    { test: /哈哈|笑死|好笑/, reply:'看把你乐的。说吧，谁又干了什么离谱事？' }
   ];
 
-  function pickReply(text){
-    for (const r of REPLIES) if (r.keys.some(k => text.indexOf(k) >= 0)) return r.reply;
-    return '嗯，我在听，你继续说。';
+  function pickReply(text, role){
+    const normalized = String(text || '').trim();
+    for (const r of REPLIES) if (r.test.test(normalized)) return r.reply;
+    if (/[？?]$|^(为什么|怎么|什么|哪|谁|能不能|是不是)/.test(normalized)) {
+      return '你问得太省略了。把前面那件事带一句，我才能认真回答你。';
+    }
+    const fallbacks = [
+      '这句听着有后续。然后呢，最让你在意的是哪一段？',
+      '我大概懂你的意思了。你现在更想让我安慰你，还是一起想办法？',
+      '行，这件事我站你这边。先告诉我，刚才具体发生了什么？'
+    ];
+    const seed = Array.from(normalized).reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+    return fallbacks[seed % fallbacks.length];
   }
 
   function parseLog(text){
@@ -1122,7 +1135,7 @@
     setTimeout(() => {
       state.typing = false;
       if (!state.member) state.usageLeft = Math.max(0, state.usageLeft - 1);
-      role.messages.push({ s:'ai', t:pickReply(text), m:fmtTime() });
+      role.messages.push({ s:'ai', t:pickReply(text, role), m:fmtTime() });
       renderChat();
     }, 1700);
   }
