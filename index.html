@@ -404,7 +404,7 @@
         <div class="chat-header">
           <div class="l"><img class="he img" id="chat-avatar" style="display:none"><span class="he" id="chat-emoji">🌻</span><span class="hn" id="chat-name">小满</span></div>
           <div class="right">
-            <span class="ai-tag">AI 生成 · 非真实人物</span>
+            <span class="ai-tag">DeepSeek 实时回复 · 请勿输入隐私</span>
             <span class="usage-chip" id="chat-usage">今日 18/20</span>
             <button class="theme-btn" id="themeBtn" onclick="switchTheme()">暖阳</button>
           </div>
@@ -1118,7 +1118,42 @@
     sendChat();
   }
 
-  function sendChat(){
+  const AI_API_BASE = 'https://quiet-papers-melt.loca.lt';
+
+  function getDemoSessionId(){
+    const key = 'wojide_demo_session';
+    let id = localStorage.getItem(key);
+    if (!id){
+      id = 'web-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+      localStorage.setItem(key, id);
+    }
+    return id;
+  }
+
+  async function requestAiReply(text){
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60000);
+    try {
+      const response = await fetch(AI_API_BASE + '/api/demo-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true'
+        },
+        body: JSON.stringify({ sessionId: getDemoSessionId(), content: text }),
+        signal: controller.signal
+      });
+      const result = await response.json();
+      if (!response.ok || result.code !== 0 || !result.data || !result.data.reply) {
+        throw new Error(result.message || 'DeepSeek 暂时不可用');
+      }
+      return result.data;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function sendChat(){
     const input = $('chat-input');
     const text = input.value.trim();
     if (!text || state.typing) return;
@@ -1132,12 +1167,22 @@
     role.messages.push({ s:'user', t:text, m:fmtTime() });
     state.typing = true;
     renderChat();
-    setTimeout(() => {
+    try {
+      const result = await requestAiReply(text);
       state.typing = false;
       if (!state.member) state.usageLeft = Math.max(0, state.usageLeft - 1);
-      role.messages.push({ s:'ai', t:pickReply(text, role), m:fmtTime() });
+      role.messages.push({ s:'ai', t:result.reply, m:fmtTime() });
       renderChat();
-    }, 1700);
+    } catch (error) {
+      state.typing = false;
+      role.messages.push({
+        s:'ai',
+        t:'真实 AI 服务暂时没有返回，请稍后重试。这不是模拟回复。',
+        m:fmtTime()
+      });
+      renderChat();
+      toast(error && error.message ? error.message : 'DeepSeek 暂时不可用');
+    }
   }
 
   function openPlusMenu(){
