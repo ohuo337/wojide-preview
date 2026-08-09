@@ -1117,7 +1117,7 @@
   async function requestAiReply(text){
     const role = getRole();
     const history = role
-      ? role.messages.slice(0, -1).slice(-12).map((message) => ({
+      ? role.messages.slice(0, -1).filter((message) => !message.type || message.type === 'text').slice(-12).map((message) => ({
           sender: message.s === 'user' ? 'user' : 'assistant',
           content: message.t
         }))
