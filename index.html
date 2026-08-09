@@ -1,0 +1,1369 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我记得 · 小程序交互预览</title>
+<style>
+  :root {
+    --bg: #F7F2EA;
+    --card: #FFFDF9;
+    --line: #ECE4D7;
+    --text: #3E3A34;
+    --text-sub: #8C8377;
+    --primary: #C97B4A;
+    --primary-soft: #F3E2D3;
+    --danger: #C45454;
+    --success: #7BA05B;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: #EFE9DE;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px 12px 40px;
+    color: var(--text);
+  }
+  .intro { text-align: center; margin-bottom: 14px; max-width: 520px; }
+  .intro h1 { font-size: 20px; margin: 0 0 6px; font-weight: 700; letter-spacing: 1px; }
+  .intro .hint { font-size: 13px; color: #8C8377; margin: 0 0 10px; }
+  .plat-toggle { display: inline-flex; background: #E5DCCB; border-radius: 999px; padding: 4px; }
+  .plat-toggle button {
+    border: 0; background: transparent; color: #8C8377; font-size: 13px;
+    padding: 6px 18px; border-radius: 999px; cursor: pointer;
+  }
+  .plat-toggle button.on { background: var(--card); color: var(--primary); font-weight: 600; box-shadow: 0 1px 4px rgba(80,60,40,.15); }
+  .stage {
+    position: relative;
+    width: 390px;
+    height: 820px;
+    background: var(--bg);
+    border-radius: 42px;
+    border: 9px solid #201B15;
+    box-shadow: 0 18px 50px rgba(60,45,25,.28);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .statusbar {
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--bg);
+    color: var(--text);
+    position: relative;
+    z-index: 20;
+  }
+  .navbar {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    z-index: 20;
+  }
+  .navbar .back {
+    position: absolute; left: 12px; top: 0; bottom: 0;
+    border: 0; background: transparent; color: var(--text);
+    font-size: 22px; cursor: pointer; padding: 0 10px; visibility: hidden;
+  }
+  .navbar .title { font-size: 16px; font-weight: 600; }
+  .navbar .right { position: absolute; right: 12px; font-size: 12px; color: var(--text-sub); }
+  .pages { position: absolute; top: 76px; bottom: 0; left: 0; right: 0; }
+  .page {
+    display: none;
+    position: absolute;
+    top: 0; bottom: 0; left: 0; right: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px 18px 90px;
+    background: var(--bg);
+  }
+  .page.active { display: block; }
+  .page.has-tabbar { padding-bottom: 130px; }
+  .tabbar {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 62px;
+    background: var(--card);
+    border-top: 1px solid var(--line);
+    display: flex;
+    z-index: 30;
+  }
+  .tabbar button {
+    flex: 1; border: 0; background: transparent; color: #9B8F7E;
+    font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer;
+  }
+  .tabbar button .ic { font-size: 20px; }
+  .tabbar button.on { color: var(--primary); font-weight: 600; }
+
+  .card { background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 3px 12px rgba(80,60,40,.05); margin-bottom: 14px; }
+  .btn { display: block; width: 100%; border: 0; border-radius: 999px; padding: 12px 0; font-size: 15px; text-align: center; cursor: pointer; }
+  .btn-primary { background: var(--primary); color: #fff; font-weight: 500; }
+  .btn-ghost { background: var(--card); color: var(--primary); border: 1px solid var(--primary-soft); }
+  .btn-danger { background: #FBEDE7; color: var(--danger); }
+  .btn + .btn { margin-top: 10px; }
+  .tag { display: inline-block; background: var(--primary-soft); color: var(--primary); border-radius: 999px; font-size: 11px; padding: 3px 10px; margin: 0 5px 6px 0; }
+  .ai-tag { display: inline-block; background: rgba(201,123,74,.12); color: var(--primary); border-radius: 999px; font-size: 10px; padding: 3px 9px; }
+  .sub { color: var(--text-sub); font-size: 12px; line-height: 1.7; }
+  .section-title { font-size: 16px; font-weight: 600; margin: 18px 0 12px; }
+
+  /* 首页 */
+  .hero { text-align: center; padding: 26px 6px 10px; }
+  .hero .emoji { font-size: 52px; }
+  .hero h2 { font-size: 22px; margin: 12px 0 8px; letter-spacing: 1px; }
+  .hero .sub { max-width: 300px; margin: 0 auto 12px; }
+  .step-row { display: flex; padding: 12px 0; }
+  .step-row .num { width: 26px; height: 26px; line-height: 26px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); text-align: center; font-size: 13px; font-weight: 700; margin-right: 12px; flex-shrink: 0; }
+  .step-row b { font-size: 14px; }
+  .cta { margin-top: 16px; }
+  .footer-note { text-align: center; color: var(--text-sub); font-size: 11px; margin-top: 26px; line-height: 1.8; }
+
+  /* 创建向导 */
+  .steps-bar { display: flex; align-items: center; justify-content: center; margin: 4px 0 14px; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); color: var(--text-sub); font-size: 11px; display: flex; align-items: center; justify-content: center; }
+  .dot + .dot { margin-left: 10px; }
+  .dot.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .dot.done { background: var(--primary-soft); border-color: var(--primary-soft); color: var(--primary); }
+  .steps-label { margin-left: 12px; font-size: 14px; font-weight: 600; }
+  .type-grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
+  .type-card { width: 48.5%; background: var(--card); border-radius: 16px; padding: 18px 10px; text-align: center; margin-bottom: 12px; cursor: pointer; box-shadow: 0 3px 12px rgba(80,60,40,.05); }
+  .type-card .te { font-size: 34px; }
+  .type-card b { display: block; font-size: 14px; margin-top: 8px; }
+  .type-card .td { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
+  .field { margin-bottom: 14px; }
+  .label { font-size: 12px; color: var(--text-sub); margin-bottom: 6px; }
+  input, textarea, select { width: 100%; border: 0; background: #F1EADF; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text); outline: none; }
+  textarea { min-height: 84px; resize: none; }
+  .chips { display: flex; flex-wrap: wrap; }
+  .chip { padding: 7px 15px; background: #F1EADF; border-radius: 999px; font-size: 13px; margin: 0 8px 8px 0; cursor: pointer; border: 1px solid transparent; }
+  .chip.on { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+  .emoji-row { display: flex; flex-wrap: wrap; }
+  .emoji-item { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: #F1EADF; border-radius: 10px; margin: 0 8px 8px 0; cursor: pointer; border: 1px solid transparent; }
+  .emoji-item.on { border-color: var(--primary); background: var(--primary-soft); }
+  .avatar-upload-row { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; }
+  .avatar-upload-btn { border: 0; background: #F1EADF; border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; color: var(--text); }
+  .avatar-preview { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; }
+  .role-emoji.img, .avatar.img { object-fit: cover; background: transparent; }
+  .pe.img { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; }
+  .he.img { width: 22px; height: 22px; border-radius: 6px; margin-right: 7px; object-fit: cover; }
+  .tip-box { background: var(--primary-soft); border-radius: 10px; color: var(--primary); font-size: 12px; line-height: 1.7; padding: 10px 12px; margin-bottom: 12px; }
+  .help-link { text-align: right; color: var(--primary); font-size: 12px; margin: -6px 0 12px; cursor: pointer; }
+  .meta-row { display: flex; justify-content: space-between; color: var(--text-sub); font-size: 11px; margin: 8px 0 12px; }
+  .analyzing { text-align: center; padding: 60px 20px; }
+  .analyzing .a-emoji { font-size: 46px; animation: breathe 1.6s ease-in-out infinite; }
+  @keyframes breathe { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.12); opacity: .75; } }
+  .analyzing h3 { margin: 16px 0 8px; }
+  .persona-head { text-align: center; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .persona-head .pe { font-size: 48px; }
+  .persona-head h3 { margin: 8px 0 6px; font-size: 20px; }
+  .p-summary { font-size: 14px; line-height: 1.8; margin: 14px 0; }
+  .p-line { display: flex; margin-bottom: 10px; font-size: 13px; line-height: 1.6; }
+  .p-line .k { color: var(--text-sub); font-size: 12px; flex-shrink: 0; margin-right: 12px; }
+  .mem-item { display: flex; font-size: 12px; line-height: 1.6; margin-bottom: 6px; }
+  .mem-item::before { content: "·"; color: var(--primary); margin-right: 8px; }
+  .opening-bubble { background: #F1EADF; border-radius: 14px; padding: 12px 14px; font-size: 14px; line-height: 1.7; display: inline-block; max-width: 86%; }
+
+  /* 角色列表 */
+  .role-card .head { display: flex; align-items: center; }
+  .role-emoji { width: 46px; height: 46px; border-radius: 12px; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; font-size: 26px; margin-right: 12px; }
+  .role-card h3 { margin: 0; font-size: 16px; }
+  .role-card .meta { font-size: 11px; color: var(--text-sub); margin-top: 3px; }
+  .role-card .summary { font-size: 13px; line-height: 1.7; margin-top: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .role-actions { display: flex; margin-top: 12px; }
+  .role-actions .btn { margin: 0; padding: 9px 0; font-size: 13px; flex: 1; }
+  .role-actions .btn + .btn { margin-left: 10px; }
+  .empty-box { text-align: center; color: var(--text-sub); padding: 60px 20px; }
+  .empty-box .e-emoji { font-size: 42px; margin-bottom: 12px; }
+
+  /* 聊天 */
+  #page-chat { padding: 0; display: none; flex-direction: column; background: var(--chat-bg, var(--bg)); }
+  #page-chat.active { display: flex; }
+  #page-chat.theme-warm { --chat-bg:#F7F2EA; --chat-header:#FFFDF9; --chat-sub:#A79B8A; --bubble-ai:#FFFFFF; --bubble-user:#D9EFC4; --bubble-border:#ECE4D7; --chat-text:#3E3A34; }
+  #page-chat.theme-dark { --chat-bg:#1F1C18; --chat-header:#2A2621; --chat-sub:#8B8172; --bubble-ai:#2E2A25; --bubble-user:#3B4A2E; --bubble-border:#3A352F; --chat-text:#E8E0D4; }
+  #page-chat.theme-mint { --chat-bg:#EEF4EC; --chat-header:#FFFFFF; --chat-sub:#8DA28B; --bubble-ai:#FFFFFF; --bubble-user:#CDE8CF; --bubble-border:#DCE7D8; --chat-text:#3E3A34; }
+  .chat-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--chat-header); border-bottom: 1px solid var(--bubble-border); }
+  .chat-header .l { display: flex; align-items: center; min-width: 0; }
+  .chat-header .he { font-size: 22px; margin-right: 7px; }
+  .chat-header .hn { font-size: 15px; font-weight: 600; max-width: 92px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-header .right { display: flex; align-items: center; gap: 8px; }
+  .theme-btn { font-size: 10px; color: var(--chat-sub); border: 1px solid var(--bubble-border); border-radius: 999px; padding: 3px 9px; cursor: pointer; background: transparent; }
+  .usage-chip { font-size: 10px; color: var(--chat-sub); border: 1px solid var(--bubble-border); border-radius: 999px; padding: 3px 9px; }
+  .chat-msgs { flex: 1; overflow-y: auto; padding: 14px; }
+  .msg-row { display: flex; margin-bottom: 16px; }
+  .msg-row.user { justify-content: flex-end; }
+  .avatar { width: 38px; height: 38px; border-radius: 10px; background: var(--chat-header); border: 1px solid var(--bubble-border); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 9px; flex-shrink: 0; }
+  .avatar.u { background: var(--primary); border: 0; color: #fff; font-size: 12px; margin: 0 0 0 9px; }
+  .bubble-wrap { max-width: 70%; }
+  .bubble { padding: 10px 13px; border-radius: 13px; font-size: 14px; line-height: 1.6; word-break: break-all; }
+  .msg-row.ai .bubble { background: var(--bubble-ai); border: 1px solid var(--bubble-border); border-top-left-radius: 4px; }
+  .msg-row.user .bubble { background: var(--bubble-user); border-top-right-radius: 4px; }
+  .msg-meta { font-size: 10px; color: var(--chat-sub); margin-top: 5px; display: flex; gap: 8px; align-items: center; }
+  .mem-btn { border: 0; background: transparent; color: var(--chat-sub); font-size: 10px; cursor: pointer; padding: 0; }
+  .typing-bubble { display: flex; align-items: center; min-width: 64px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--chat-sub); margin: 0 3px; animation: blink 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: .2s; }
+  .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,100% { opacity:.25; transform: translateY(0); } 50% { opacity:1; transform: translateY(-2px); } }
+  .opening-card { margin: 12px 0 24px; }
+  .opening-card .qt { text-align: center; color: var(--chat-sub); font-size: 13px; margin: 20px 0 12px; }
+  .quick-chips { display: flex; flex-wrap: wrap; justify-content: center; }
+  .quick-chip { background: var(--chat-header); border: 1px solid var(--bubble-border); border-radius: 999px; padding: 7px 14px; font-size: 13px; margin: 0 7px 8px 0; cursor: pointer; color: var(--chat-text); }
+  .limit-banner { background: var(--chat-header); border: 1px solid var(--bubble-border); border-radius: 12px; padding: 12px; text-align: center; margin: 16px 0; }
+  .limit-banner p { margin: 0 0 10px; font-size: 13px; color: var(--chat-sub); line-height: 1.6; }
+  .limit-banner .btn { display: inline-block; width: auto; padding: 8px 26px; font-size: 13px; }
+  .chat-input { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--chat-header); border-top: 1px solid var(--bubble-border); }
+  .chat-input .plus-btn { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--chat-bg); border: 1px solid var(--bubble-border); color: var(--chat-sub); font-size: 18px; cursor: pointer; }
+  .chat-input input { flex: 1; background: var(--chat-bg); border-radius: 999px; padding: 9px 14px; font-size: 14px; }
+  .chat-input .send { border: 0; background: var(--primary); color: #fff; border-radius: 999px; padding: 9px 18px; font-size: 13px; cursor: pointer; }
+  .plus-menu { position: absolute; right: 14px; bottom: 64px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; z-index: 40; display: flex; gap: 14px; box-shadow: 0 6px 18px rgba(60,45,25,.16); }
+  .plus-menu .col b { display: block; font-size: 11px; color: var(--text-sub); margin-bottom: 6px; }
+  .plus-menu .col button { display: block; width: 100%; border: 0; background: #F1EADF; border-radius: 8px; padding: 7px 12px; font-size: 13px; margin-bottom: 6px; cursor: pointer; color: var(--text); }
+  .transfer-card { background: #FDEBEB; border-radius: 10px; padding: 8px 12px; min-width: 120px; }
+  .transfer-title { font-size: 10px; color: #A35A5A; }
+  .transfer-amount { font-size: 18px; font-weight: 700; color: #C45454; margin: 3px 0; }
+  .transfer-sub { font-size: 9px; color: #B98B8B; }
+  .redpacket-card { background: #FCE9D8; border-radius: 10px; padding: 8px 12px; min-width: 120px; }
+  .redpacket-title { font-size: 12px; font-weight: 600; color: #C97B4A; }
+  .redpacket-sub { font-size: 10px; color: #B58A62; margin-top: 2px; }
+  .stats-panel { background: #F1EADF; border-radius: 10px; padding: 10px; margin: 8px 0 12px; }
+  .stats-row { display: flex; }
+  .stat { flex: 1; text-align: center; }
+  .stat b { display: block; font-size: 20px; color: var(--primary); }
+  .stat span { font-size: 10px; color: var(--text-sub); }
+  .stats-topics { margin-top: 8px; }
+  .stats-records { margin-top: 8px; }
+  .record-title { font-size: 10px; color: var(--text-sub); margin-bottom: 4px; }
+  .record-item { font-size: 11px; line-height: 1.6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stats-note { font-size: 10px; color: var(--text-sub); margin-top: 8px; }
+
+  /* 我的 */
+  .user-row { display: flex; align-items: center; }
+  .user-avatar-lg { width: 60px; height: 60px; border-radius: 50%; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; font-size: 30px; margin-right: 14px; }
+  .user-avatar-lg.img { object-fit: cover; }
+  .avatar-pick { cursor: pointer; margin-right: 14px; }
+  .avatar.u.img { background: transparent; object-fit: cover; }
+  .nick-input { background: transparent; padding: 0; font-size: 17px; font-weight: 600; }
+  .badge { display: inline-block; background: var(--primary-soft); color: var(--primary); border-radius: 999px; font-size: 10px; padding: 3px 10px; }
+  .member-card { background: var(--primary-soft); }
+  .member-card.vip { background: linear-gradient(135deg,#F3D9B8,#EFC48D); }
+  .member-card h3 { margin: 0; font-size: 17px; }
+  .member-card .exp { font-size: 12px; color: var(--text-sub); margin-top: 5px; }
+  .bar { height: 7px; background: rgba(255,255,255,.7); border-radius: 999px; margin-top: 12px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--primary); border-radius: 999px; }
+  .menu .cell { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--line); font-size: 15px; cursor: pointer; }
+  .menu .cell:last-child { border-bottom: 0; }
+  .menu .cell .ar { color: var(--text-sub); font-size: 18px; }
+
+  /* 会员 */
+  .benefit-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+  .benefit-table th { font-weight: 600; color: var(--text-sub); padding: 8px 4px; text-align: left; }
+  .benefit-table td { padding: 10px 4px; border-top: 1px solid var(--line); line-height: 1.5; }
+  .benefit-table td.v { color: var(--primary); font-weight: 500; }
+  .plan-grid { display: flex; gap: 10px; margin-top: 16px; }
+  .plan-card { flex: 1; background: var(--card); border: 2px solid var(--line); border-radius: 14px; text-align: center; padding: 16px 6px; cursor: pointer; }
+  .plan-card.on { border-color: var(--primary); background: var(--primary-soft); }
+  .plan-card b { display: block; font-size: 13px; }
+  .plan-card .price { font-size: 22px; font-weight: 700; color: var(--primary); margin: 8px 0 4px; }
+  .plan-card .pt { font-size: 10px; color: var(--text-sub); min-height: 16px; }
+  .ios-note { text-align: center; color: var(--text-sub); font-size: 11px; margin-top: 16px; }
+
+  /* 数据隐私 */
+  .promise-row { display: flex; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .promise-row:last-child { border-bottom: 0; }
+  .promise-row .pi { font-size: 24px; margin-right: 12px; }
+  .promise-row b { font-size: 14px; }
+  .link { text-align: center; color: var(--primary); font-size: 13px; margin-top: 22px; cursor: pointer; }
+  .ad-placeholder { border: 2px dashed var(--line); border-radius: 14px; color: var(--text-sub); font-size: 11px; text-align: center; padding: 16px 0; margin: 14px 0; background: rgba(255,255,255,.4); }
+  .splash-overlay { position: absolute; inset: 0; background: var(--bg); z-index: 70; display: none; flex-direction: column; align-items: center; justify-content: center; }
+  .splash-overlay.show { display: flex; }
+  .splash-logo { font-size: 64px; }
+  .splash-name { font-size: 26px; font-weight: 700; letter-spacing: 4px; margin: 14px 0 8px; }
+  .splash-slogan { font-size: 13px; color: var(--text-sub); margin-bottom: 12px; }
+  .splash-ad-box { position: absolute; left: 24px; right: 24px; bottom: 70px; border: 2px dashed var(--line); border-radius: 14px; color: var(--text-sub); font-size: 12px; text-align: center; padding: 22px 0; background: rgba(255,255,255,.4); }
+  .splash-skip { position: absolute; top: 34px; right: 16px; border: 0; background: rgba(255,255,255,.75); color: var(--text-sub); border-radius: 999px; padding: 6px 14px; font-size: 12px; cursor: pointer; }
+  .limit-actions { display: flex; gap: 10px; margin-top: 12px; }
+  .ad-overlay { position: absolute; inset: 0; background: rgba(20,16,12,.88); z-index: 75; display: none; flex-direction: column; align-items: center; justify-content: center; }
+  .ad-overlay.show { display: flex; }
+  .ad-box { width: 300px; background: var(--card); border-radius: 16px; text-align: center; padding: 36px 20px; font-size: 14px; color: var(--text); }
+  .ad-box .cnt { font-size: 30px; font-weight: 700; color: var(--primary); margin-top: 10px; }
+  .ad-close { margin-top: 18px; color: #CFC7B8; font-size: 12px; cursor: pointer; }
+
+  /* 投诉 */
+  .complain-field { margin-bottom: 14px; }
+  .complain-field .label { margin-bottom: 6px; }
+
+  /* 关于 & 协议 */
+  .about-logo { text-align: center; padding: 26px 0 10px; }
+  .about-logo .lg { font-size: 52px; }
+  .about-logo h2 { margin: 10px 0 8px; }
+  .terms h3 { font-size: 14px; margin: 16px 0 6px; }
+  .terms p { font-size: 12px; color: var(--text-sub); line-height: 1.8; margin: 0 0 8px; }
+
+  /* 弹窗与提示 */
+  .modal-mask { position: absolute; inset: 0; background: rgba(40,30,20,.55); display: none; align-items: center; justify-content: center; z-index: 60; }
+  .modal-mask.show { display: flex; }
+  .modal { width: 300px; background: var(--card); border-radius: 18px; padding: 20px 18px 14px; }
+  .modal h4 { margin: 0 0 10px; text-align: center; font-size: 16px; }
+  .modal .mb { font-size: 13px; color: var(--text-sub); line-height: 1.8; }
+  .modal .mb div { margin-bottom: 4px; }
+  .modal .ma { display: flex; gap: 10px; margin-top: 18px; }
+  .modal .ma button { flex: 1; border: 0; border-radius: 999px; padding: 10px 0; font-size: 14px; cursor: pointer; }
+  .modal .ma .ok { background: var(--primary); color: #fff; }
+  .modal .ma .cancel { background: #F1EADF; color: var(--text); }
+  .modal .ma .ok.danger { background: var(--danger); }
+  #toast { position: absolute; left: 50%; top: 46%; transform: translate(-50%,-50%); background: rgba(40,30,20,.85); color: #fff; font-size: 13px; padding: 10px 18px; border-radius: 999px; z-index: 80; opacity: 0; pointer-events: none; transition: opacity .25s; white-space: nowrap; }
+  #toast.show { opacity: 1; }
+  .hidden { display: none !important; }
+
+  /* 截图干净模式 */
+  body.clean .intro { display: none; }
+  body.clean { padding-top: 10px; }
+  @media (max-width: 420px) {
+    body { padding: 8px 4px 24px; }
+    .stage { width: 100%; max-width: 390px; height: 800px; border-radius: 36px; border-width: 7px; }
+  }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>我记得 · 小程序交互预览</h1>
+    <p class="hint">封闭测试交互预览；支付与广告奖励均已关闭</p>
+    <div class="plat-toggle" id="platToggle">
+      <button type="button" data-plat="android" class="on">Android</button>
+      <button type="button" data-plat="ios">iOS</button>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="navbar">
+      <button class="back" id="navBack" aria-label="返回">‹</button>
+      <span class="title" id="navTitle">我记得</span>
+      <span class="right" id="navRight"></span>
+    </div>
+
+    <!-- 封闭测试开屏说明 -->
+    <div class="splash-overlay" id="splashOverlay">
+      <div class="splash-logo">☁️</div>
+      <div class="splash-name">我记得</div>
+      <div class="splash-slogan">熟悉语气，也记得共同经历</div>
+      <span class="ai-tag">AI 生成 · 非真实人物</span>
+      <div class="splash-ad-box">仅限18岁以上用户 · 封闭测试</div>
+      <button class="splash-skip" onclick="hideSplash()">跳过 <span id="splashCount">3</span>s</button>
+    </div>
+
+    <div class="pages">
+      <!-- 首页 -->
+      <section class="page active has-tabbar" id="page-home">
+        <div class="hero">
+          <div class="emoji">☁️</div>
+          <h2>熟悉语气，也记得共同经历</h2>
+          <p class="sub">用你有权使用的聊天素材，创建一位有边界、有记忆的私人 AI 伙伴</p>
+          <span class="ai-tag">AI 生成 · 非真实人物</span>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div style="color:var(--primary);font-size:13px;margin-bottom:10px">效果示例</div>
+          <div style="background:#d9efc4;border-radius:12px;padding:10px 12px;margin-left:25%;font-size:13px">今天又加班到很晚。</div>
+          <div style="background:#f7f2ea;border-radius:12px;padding:10px 12px;margin:9px 22% 0 0;font-size:13px">先去吃点东西，别又拿三明治糊弄自己。</div>
+          <button class="btn btn-ghost" style="margin-top:12px" onclick="openChat('r1')">无需上传，先体验示例</button>
+        </div>
+        <div class="card">
+          <div class="section-title">三步，生成你的专属角色</div>
+          <div class="step-row"><div class="num">1</div><div><b>关系与信息</b><div class="sub">定义昵称、头像、性格与语气</div></div></div>
+          <div class="step-row"><div class="num">2</div><div><b>上传聊天记录</b><div class="sub">粘贴文本，或选择微信里的 TXT 文件</div></div></div>
+          <div class="step-row"><div class="num">3</div><div><b>预览并创建</b><div class="sub">先看语气与共同记忆，满意后再保存</div></div></div>
+        </div>
+        <div class="cta">
+          <button class="btn btn-primary" onclick="go('create')">创建我的 AI 伙伴</button>
+          <button class="btn btn-ghost" onclick="go('roles')">查看我的角色</button>
+        </div>
+        <div class="footer-note">仅限18岁以上用户 · 所有角色均由 AI 虚拟生成，不代表任何真实人物<br><span style="color:var(--primary);cursor:pointer" onclick="go('about')">关于与合规说明</span></div>
+      </section>
+
+      <!-- 创建角色 -->
+      <section class="page" id="page-create">
+        <div id="create-body"></div>
+      </section>
+
+      <!-- 角色列表 -->
+      <section class="page has-tabbar" id="page-roles">
+        <div id="roles-body"></div>
+      </section>
+
+      <!-- 聊天 -->
+      <section class="page" id="page-chat">
+        <div class="chat-header">
+          <div class="l"><img class="he img" id="chat-avatar" style="display:none"><span class="he" id="chat-emoji">🌻</span><span class="hn" id="chat-name">小满</span></div>
+          <div class="right">
+            <span class="ai-tag">AI 生成 · 非真实人物</span>
+            <span class="usage-chip" id="chat-usage">今日 18/20</span>
+            <button class="theme-btn" id="themeBtn" onclick="switchTheme()">暖阳</button>
+          </div>
+        </div>
+        <div class="chat-msgs" id="chat-msgs"></div>
+        <div class="chat-input">
+          <button class="plus-btn" onclick="event.stopPropagation();openPlusMenu()">＋</button>
+          <input id="chat-input" placeholder="说点什么…" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="send" onclick="sendChat()">发送</button>
+        </div>
+        <div class="plus-menu hidden" id="plusMenu">
+          <div class="col">
+            <b>转账</b>
+            <button onclick="sendSpecial('transfer','66.66')">¥66.66</button>
+            <button onclick="sendSpecial('transfer','88.88')">¥88.88</button>
+            <button onclick="sendSpecial('transfer','199.00')">¥199.00</button>
+          </div>
+          <div class="col">
+            <b>红包</b>
+            <button onclick="sendSpecial('redpacket','1.00')">¥1.00</button>
+            <button onclick="sendSpecial('redpacket','5.20')">¥5.20</button>
+            <button onclick="sendSpecial('redpacket','8.88')">¥8.88</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 我的 -->
+      <section class="page has-tabbar" id="page-profile">
+        <div id="profile-body"></div>
+      </section>
+
+      <!-- 会员中心 -->
+      <section class="page" id="page-vip">
+        <div class="card">
+          <div class="section-title" style="margin-top:0">会员权益对比</div>
+          <table class="benefit-table">
+            <tr><th>权益</th><th>免费版</th><th>我记得会员</th></tr>
+            <tr><td>每日对话次数</td><td>20 次</td><td class="v">最多 500 次</td></tr>
+            <tr><td>角色数量</td><td>3 个</td><td class="v">10 个</td></tr>
+            <tr><td>记忆条数</td><td>20 条</td><td class="v">200 条</td></tr>
+            <tr><td>素材长度</td><td>2 万字</td><td class="v">8 万字</td></tr>
+            <tr><td>聊天主题</td><td>默认主题</td><td class="v">全部主题</td></tr>
+          </table>
+        </div>
+        <div class="plan-grid" id="planGrid">
+          <div class="plan-card" data-plan="month"><b>月卡</b><div class="price">¥18</div><div class="pt"></div></div>
+          <div class="plan-card on" data-plan="quarter"><b>季卡</b><div class="price">¥45</div><div class="pt">省 ¥9</div></div>
+          <div class="plan-card" data-plan="year"><b>年卡</b><div class="price">¥128</div><div class="pt">最划算</div></div>
+        </div>
+        <div class="ios-note">封闭测试阶段不开放支付，也不会自动扣费</div>
+        <div class="cta"><button class="btn btn-primary" onclick="pay()">申请体验资格</button></div>
+        <p class="sub" style="text-align:center;margin-top:12px">申请仅用于统计体验意向，由运营白名单审核发放。</p>
+      </section>
+
+      <!-- 数据与隐私 -->
+      <section class="page" id="page-privacy">
+        <div style="font-size:20px;font-weight:700;margin:4px 0 14px">你的数据，只属于你</div>
+        <div class="card">
+          <div class="promise-row"><div class="pi">🔒</div><div><b>仅用于生成你的专属角色</b><div class="sub" style="margin-top:3px">上传素材只用于生成角色与对话，不会被用于任何通用模型训练。</div></div></div>
+          <div class="promise-row"><div class="pi">🗂️</div><div><b>数据只属于你</b><div class="sub" style="margin-top:3px">角色、人格画像与对话记录按账户隔离存储，其他用户无法访问。</div></div></div>
+          <div class="promise-row"><div class="pi">🗑️</div><div><b>随时彻底删除</b><div class="sub" style="margin-top:3px">删除后角色、记忆与全部对话一并清除，且不可恢复。</div></div></div>
+        </div>
+        <button class="btn btn-danger" onclick="deleteAll()">一键彻底删除我的全部数据</button>
+        <button class="btn btn-ghost" onclick="go('complaint')">侵权投诉与举报</button>
+        <div class="link" onclick="go('terms#privacy')">查看《隐私政策》</div>
+      </section>
+
+      <!-- 侵权投诉 -->
+      <section class="page" id="page-complaint">
+        <div class="card">
+          <div class="tip-box">如你认为角色内容侵犯了你的权益，请填写以下信息，我们会在 1~3 个工作日内处理并答复。</div>
+          <div class="complain-field">
+            <div class="label">投诉类型</div>
+            <div class="chips" id="complaintTypes">
+              <span class="chip on" data-t="内容侵权">内容侵权</span>
+              <span class="chip" data-t="色情低俗">色情低俗</span>
+              <span class="chip" data-t="违法信息">违法信息</span>
+              <span class="chip" data-t="其他">其他</span>
+            </div>
+          </div>
+          <div class="complain-field"><div class="label">涉及角色 ID（选填）</div><input id="cRoleId" placeholder="角色列表中的 ID"></div>
+          <div class="complain-field"><div class="label">详细说明</div><textarea id="cContent" placeholder="请描述具体情况（5 字以上）"></textarea></div>
+          <div class="complain-field"><div class="label">联系方式（选填）</div><input id="cContact" placeholder="手机号或邮箱，便于我们答复"></div>
+          <button class="btn btn-primary" onclick="submitComplaint()">提交</button>
+        </div>
+      </section>
+
+      <!-- 关于 -->
+      <section class="page" id="page-about">
+        <div class="card about-logo">
+          <div class="lg">☁️</div>
+          <h2>我记得</h2>
+          <p class="sub" style="margin:0 0 12px">「我记得」是一款自定义 AI 角色创建工具。所有角色均由 AI 基于你授权上传的素材虚拟生成，非真实人物，不具备现实身份。</p>
+          <span class="ai-tag">AI 生成 · 非真实人物</span>
+        </div>
+        <div class="card menu">
+          <div class="cell" onclick="go('terms#user')"><span>《用户协议》</span><span class="ar">›</span></div>
+          <div class="cell" onclick="go('terms#privacy')"><span>《隐私政策》</span><span class="ar">›</span></div>
+          <div class="cell" onclick="go('complaint')"><span>侵权投诉与举报</span><span class="ar">›</span></div>
+        </div>
+        <div class="footer-note">联系邮箱：support@example.com<br>版本 0.1.0 (MVP)</div>
+      </section>
+
+      <!-- 协议 -->
+      <section class="page" id="page-terms">
+        <div class="card terms" id="terms-body"></div>
+      </section>
+
+      <!-- 导出帮助 -->
+      <section class="page" id="page-help">
+        <div class="card" style="background:var(--primary-soft)">
+          <b>一句话</b>
+          <p class="sub" style="margin:6px 0 0">最推荐：电脑版微信「多选 → 复制」，粘贴到记事本存成 TXT，发到文件传输助手，再在小程序里选择这个文件。</p>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-top:0">方法一：微信电脑版（推荐）</div>
+          <div class="step-row"><div class="num">1</div><div class="sub">登录微信电脑版，打开要导出的聊天窗口</div></div>
+          <div class="step-row"><div class="num">2</div><div class="sub">右键任意一条消息，点「多选」</div></div>
+          <div class="step-row"><div class="num">3</div><div class="sub">勾选要导出的那一段（可以滚动跨天选择）</div></div>
+          <div class="step-row"><div class="num">4</div><div class="sub">再次右键点「复制」（一次最多约 100 条，可分多次）</div></div>
+          <div class="step-row"><div class="num">5</div><div class="sub">粘贴到记事本，另存为「聊天记录.txt」，编码选 UTF-8</div></div>
+          <div class="step-row"><div class="num">6</div><div class="sub">把 TXT 发送到微信「文件传输助手」</div></div>
+          <div class="step-row"><div class="num">7</div><div class="sub">在小程序里选文件传输助手里的文件，或直接全选复制后粘贴</div></div>
+        </div>
+        <div class="card">
+          <div class="section-title">方法二：手机端（备选）</div>
+          <div class="step-row"><div class="num">1</div><div class="sub">对话右上角「···」→「查找聊天记录」→「日期」，定位时间段</div></div>
+          <div class="step-row"><div class="num">2</div><div class="sub">长按消息 →「多选」勾选多段（手机端不能一键复制整段）</div></div>
+          <div class="step-row"><div class="num">3</div><div class="sub">逐条长按 →「复制」，粘贴到备忘录整理</div></div>
+          <div class="step-row"><div class="num">4</div><div class="sub">整段复制，在小程序创建页粘贴进输入框</div></div>
+        </div>
+        <div class="card">
+          <div class="section-title">常见问题</div>
+          <div class="qa"><b>电脑上聊天记录不全？</b><p class="sub" style="margin:4px 0 12px">手机微信：我 → 设置 → 聊天 → 聊天记录迁移与备份 → 迁移到电脑，完成后再导出。</p></div>
+          <div class="qa"><b>只想导出某几天？</b><p class="sub" style="margin:4px 0 12px">手机用「查找聊天记录 → 日期」跳转；电脑用搜索框按日期筛选，再从结果里多选复制。</p></div>
+          <div class="qa"><b>消息太多一次复制不完？</b><p class="sub" style="margin:4px 0 12px">分多次复制粘贴；单次素材上限免费 2 万字、会员 8 万字，超出会自动截取。</p></div>
+          <div class="qa"><b>语音消息能导出吗？</b><p class="sub" style="margin:4px 0 0">微信不支持导出语音原文；重要内容先听写转成文字再复制。</p></div>
+        </div>
+        <div class="card">
+          <div class="section-title">隐私提醒</div>
+          <p class="sub" style="margin:0">只导出你本人有合法使用权的记录；导出前请删除手机号、住址等无关隐私信息。</p>
+        </div>
+      </section>
+    </div>
+
+    <nav class="tabbar" id="tabbar">
+      <button data-tab="home" class="on"><span class="ic">🏠</span>首页</button>
+      <button data-tab="roles"><span class="ic">👥</span>角色</button>
+      <button data-tab="profile"><span class="ic">👤</span>我的</button>
+    </nav>
+
+    <div class="modal-mask" id="modal-mask">
+      <div class="modal">
+        <h4 id="modal-title"></h4>
+        <div class="mb" id="modal-body"></div>
+        <div class="ma">
+          <button class="cancel" id="modal-cancel" onclick="closeModal()">取消</button>
+          <button class="ok" id="modal-ok" onclick="modalOk()">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 激励视频广告（模拟） -->
+    <div class="ad-overlay" id="adOverlay">
+      <div class="ad-box">
+        <div>🎬 激励视频广告（模拟）</div>
+        <div class="cnt" id="adCount">3</div>
+        <div class="sub" style="margin-top:8px">看完即可恢复 5 次对话</div>
+      </div>
+      <button class="ad-close" onclick="closeAd()">关闭</button>
+    </div>
+
+    <div id="toast"></div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const TABS = ['home', 'roles', 'profile'];
+  const TITLES = { home:'我记得', create:'创建角色', roles:'我的角色', chat:'对话', profile:'我的', vip:'会员中心', privacy:'数据与隐私', complaint:'侵权投诉与举报', about:'关于与合规', terms:'用户协议', help:'如何导出聊天记录' };
+
+  const state = {
+    member: false,
+    memberType: 'free',
+    platform: 'android',
+    theme: 'warm',
+    myAvatar: '',
+    usageLeft: 18,
+    planId: 'quarter',
+    currentRole: null,
+    authAgreed: false,
+    createStep: 1,
+    createForm: { name:'', emoji:'🌻', bio:'', tone:'简短微信风', avatarData:'' },
+    createTags: [],
+    createText: '',
+    typing: false,
+    roles: [
+      {
+        id: 'r1', name: '小满', emoji: '🌻',
+        tags: ['温柔细腻', '偶尔嘴硬', '记得小事'],
+        summary: '会记得你说过的小事，偶尔嘴硬心软。',
+        opening: '在忙什么呢，今天过得怎么样？',
+        memories: ['你说过最喜欢秋天', '上回说好一起去新书店', '你加班容易忘记吃饭'],
+        messages: [
+          { s:'ai', t:'晚上好呀，今天加班到这么晚，先喝口水歇会儿。', m:'18:02' },
+          { s:'user', t:'还好，就是有点饿了', m:'18:03' },
+          { s:'ai', t:'下次加班记得先吃饭，别总糊弄。我记得你上次也是这么说的。', m:'18:03' },
+          { s:'user', type:'transfer', t:'转账 ¥88.88', m:'18:04' }
+        ]
+      },
+      {
+        id: 'r2', name: '阿澈', emoji: '🌙',
+        tags: ['理性冷静', '慢热'],
+        summary: '话不多，但句句接得住。',
+        opening: '嗯，我在听，你继续说。',
+        memories: ['你养了一只叫团子的猫'],
+        messages: []
+      }
+    ]
+  };
+
+  const REPLIES = [
+    { keys:['记得','上次','书店','咖啡'], reply:'记得呀，上回说好周末去那家新书店的，你可别放我鸽子。' },
+    { keys:['加班','累','辛苦','忙','饿'], reply:'辛苦了，先喝口水歇会儿。再忙也要记得吃饭，别学我。' },
+    { keys:['周末','去哪','出去'], reply:'周末去书店吧，看完书再去河边走走，你上次说想去的。' },
+    { keys:['想','在吗'], reply:'在呢，刚想给你发消息来着。' },
+    { keys:['哈哈','笑'], reply:'看把你乐的，行吧，这笑话能值一杯奶茶。' }
+  ];
+
+  function pickReply(text){
+    for (const r of REPLIES) if (r.keys.some(k => text.indexOf(k) >= 0)) return r.reply;
+    return '嗯，我在听，你继续说。';
+  }
+
+  function parseLog(text){
+    const lines = String(text || '').split(/\n/);
+    const messages = [];
+    let pending = null;
+    const flushPending = () => {
+      if (!pending) return;
+      const content = pending.contentLines.join('\n').trim();
+      if (content) messages.push({ time: pending.time, sender: pending.sender, content, type: classifyMsg(content) });
+      pending = null;
+    };
+    const classifyMsg = (content) => {
+      if (/转账|收款/.test(content) && /¥|￥|元|\.\d{2}/.test(content)) return 'transfer';
+      if (/红包|领取了你的红包|恭喜发财/.test(content)) return 'redpacket';
+      return 'text';
+    };
+    for (const raw of lines){
+      const line = raw.trim();
+      if (!line){ flushPending(); continue; }
+      const m = line.match(/^(\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2})\s+([^:：]{1,24})[：:]\s?([\s\S]*)$/);
+      if (m){
+        flushPending();
+        messages.push({ time: m[1].trim(), sender: m[2].trim(), content: m[3].trim(), type: classifyMsg(m[3].trim()) });
+        continue;
+      }
+      const m2 = line.match(/^(\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2})\s+([^:：]{1,24})\s+([\s\S]+)$/);
+      if (m2){
+        flushPending();
+        messages.push({ time: m2[1].trim(), sender: m2[2].trim(), content: m2[3].trim(), type: classifyMsg(m2[3].trim()) });
+        continue;
+      }
+      const h = line.match(/^(.{1,20}?)\s+(\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2})$/);
+      if (h){
+        flushPending();
+        pending = { time: h[2], sender: h[1].trim(), contentLines: [] };
+        continue;
+      }
+      if (pending){
+        pending.contentLines.push(line);
+        continue;
+      }
+      if (/转账|红包|收款/.test(line)){
+        messages.push({ time:'', sender:'系统', content:line, type: /转账|收款/.test(line) ? 'transfer' : 'redpacket' });
+        continue;
+      }
+      messages.push({ time:'', sender:'未命名', content:line, type:'text' });
+    }
+    flushPending();
+    const textMsgs = messages.filter(x => x.type === 'text');
+    const transfers = messages.filter(x => x.type === 'transfer').length;
+    const redpackets = messages.filter(x => x.type === 'redpacket').length;
+    const hourCount = new Array(24).fill(0);
+    textMsgs.forEach(x => {
+      const hm = (x.time.match(/\d{1,2}:\d{2}/) || [''])[0];
+      if (hm) hourCount[Number(hm.split(':')[0])] += 1;
+    });
+    let topHour = 0;
+    hourCount.forEach((v, i) => { if (v >= hourCount[topHour]) topHour = i; });
+    const transferRecords = messages.filter(x => x.type === 'transfer' || x.type === 'redpacket').slice(0, 6);
+    const topics = ['加班日常', '书店和咖啡', '下午茶', '周末安排', '好好吃饭'];
+    return { stats: { total: messages.length, transfers, redpackets, topHour }, topics, transferRecords };
+  }
+
+  function current(){ return (location.hash.replace(/^#\//,'') || 'home').split('#')[0]; }
+  function go(id){ location.hash = '#/' + id; }
+
+  window.addEventListener('hashchange', renderRoute);
+
+  function renderRoute(){
+    let id = current();
+    if (!TITLES[id]) { go('home'); return; }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    $('page-' + id).classList.add('active');
+    $('navTitle').textContent = TITLES[id];
+    $('navBack').style.visibility = TABS.indexOf(id) >= 0 ? 'hidden' : 'visible';
+    $('tabbar').style.display = TABS.indexOf(id) >= 0 ? 'flex' : 'none';
+    document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
+    if (id === 'create') renderCreate();
+    if (id === 'roles') renderRoles();
+    if (id === 'chat') renderChat();
+    if (id === 'profile') renderProfile();
+    if (id === 'terms') renderTerms();
+    const p = $('page-' + id);
+    if (p) p.scrollTop = 0;
+  }
+
+  $('navBack').onclick = () => {
+    const id = current();
+    if (id === 'help') go('create');
+    else if (id === 'chat' || id === 'create') go('roles');
+    else go('profile');
+  };
+
+  document.querySelectorAll('.tabbar button').forEach(b => b.onclick = () => go(b.dataset.tab));
+
+  document.querySelectorAll('#platToggle button').forEach(b => b.onclick = () => {
+    state.platform = b.dataset.plat;
+    document.querySelectorAll('#platToggle button').forEach(x => x.classList.toggle('on', x === b));
+  });
+
+  /* ---------- 弹窗 / Toast ---------- */
+  let modalOkCb = null;
+  let modalDanger = false;
+  function showModal(opts){
+    $('modal-title').textContent = opts.title || '';
+    $('modal-body').innerHTML = opts.body || '';
+    $('modal-ok').textContent = opts.okText || '确定';
+    modalDanger = !!opts.danger;
+    $('modal-ok').classList.toggle('danger', modalDanger);
+    if (opts.cancelText){
+      $('modal-cancel').style.display = 'block';
+      $('modal-cancel').textContent = opts.cancelText;
+    } else {
+      $('modal-cancel').style.display = 'none';
+    }
+    modalOkCb = opts.onOk || null;
+    $('modal-mask').classList.add('show');
+  }
+  function closeModal(){ $('modal-mask').classList.remove('show'); modalOkCb = null; }
+  function modalOk(){ const cb = modalOkCb; closeModal(); if (cb) cb(); }
+  let toastTimer;
+  function toast(msg){
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  /* ---------- 创建向导 ---------- */
+  const ROLE_TYPES = [
+    { id:'friend', name:'知心好友', emoji:'🌻', desc:'无话不谈的伙伴' },
+    { id:'lover', name:'温柔恋人', emoji:'🌙', desc:'细腻贴心的陪伴' },
+    { id:'family', name:'暖心家人', emoji:'🏡', desc:'家人的牵挂与叮咛' },
+    { id:'mentor', name:'人生导师', emoji:'📖', desc:'理性克制的引路人' },
+    { id:'custom', name:'自定义', emoji:'✨', desc:'完全由你定义' }
+  ];
+  const TAGS = ['温暖治愈','毒舌幽默','理性冷静','元气活泼','成熟稳重','古灵精怪'];
+  const TONES = ['简短微信风','细腻话痨','高冷寡言','热情话多'];
+  const EMOJIS = ['🌻','🐱','🐶','🌙','🍑','☁️','🦋','⭐'];
+  const STEP_NAMES = ['选择陪伴关系','基础信息','上传聊天记录','生成人格画像','创建完成'];
+  const SAMPLE = '2026-08-01 21:30 小满: 今天加班到九点，地铁上人好少\n2026-08-01 21:31 我: 累不累？吃饭了没\n2026-08-01 21:32 小满: 吃了个三明治，凑合\n2026-08-01 21:33 我: 下次加班记得先吃饭，别总糊弄\n2026-08-01 21:34 小满: 知道啦，你也是，别光说我\n2026-08-01 21:35 小满: [微信转账]我转了 88.88 给你，去买杯咖啡\n2026-08-02 09:12 小满: 早，今天居然没堵车\n2026-08-02 09:15 小满: 那周末要不要去那家新开的书店\n2026-08-02 09:16 我: 好啊，我请你喝咖啡\n2026-08-02 09:18 小满: 一言为定，别放我鸽子\n2026-08-02 12:31 小满: 午饭吃了没\n2026-08-02 12:33 我: 还没，忙\n2026-08-02 12:34 小满: 那先吃饭，我发了个红包给你\n2026-08-02 12:35 我: 领到了！谢谢老板\n2026-08-02 12:36 小满: 那是你的下午茶基金';
+  let createdRole = null;
+  let analyzeTimer = null;
+
+  function renderCreate(){
+    const s = state.createStep;
+    let html = '<div class="steps-bar">';
+    for (let i = 0; i < 5; i++){
+      html += `<div class="dot ${i+1===s?'on':''} ${i+1<s?'done':''}">${i+1}</div>`;
+    }
+    html += `<span class="steps-label">${STEP_NAMES[s-1]}</span></div>`;
+    if (s === 1){
+      html += '<div class="type-grid">';
+      ROLE_TYPES.forEach(t => { html += `<div class="type-card" onclick="state.roleType='${t.id}';state.createStep=2;renderCreate()"><div class="te">${t.emoji}</div><b>${t.name}</b><div class="td">${t.desc}</div></div>`; });
+      html += '</div>';
+    } else if (s === 2){
+      html += '<div class="card">';
+      html += '<div class="field"><div class="label">角色昵称</div><input id="fName" maxlength="12" placeholder="例如：小满" value="'+state.createForm.name+'"></div>';
+      html += '<div class="field"><div class="label">形象</div><div class="emoji-row">';
+      EMOJIS.forEach(e => { html += `<div class="emoji-item ${state.createForm.emoji===e?'on':''}" onclick="state.createForm.emoji='${e}';renderCreate()">${e}</div>`; });
+      html += '</div></div>';
+      html += '<div class="avatar-upload-row">';
+      if (state.createForm.avatarData) html += '<img class="avatar-preview" src="'+state.createForm.avatarData+'">';
+      html += '<button type="button" class="avatar-upload-btn" onclick="pickRoleAvatar()">上传图片作为头像</button>';
+      html += '</div>';
+      html += '<input type="file" id="fRoleAvatar" accept="image/*" style="display:none">';
+      html += '<div class="field"><div class="label">一句话人设（可选）</div><textarea id="fBio" maxlength="100" placeholder="例如：温柔但有边界感，喜欢讲冷笑话">'+state.createForm.bio+'</textarea></div>';
+      html += '<div class="field"><div class="label">语气偏好</div><div class="chips">';
+      TONES.forEach(t => { html += `<span class="chip ${state.createForm.tone===t?'on':''}" onclick="state.createForm.tone='${t}';renderCreate()">${t}</span>`; });
+      html += '</div></div>';
+      html += '<div class="field"><div class="label">性格标签（最多 3 个）</div><div class="chips">';
+      TAGS.forEach(t => {
+        const on = state.createTags.indexOf(t) >= 0;
+        html += `<span class="chip ${on?'on':''}" onclick="toggleTag('${t}')">${t}</span>`;
+      });
+      html += '</div></div>';
+      html += '<button class="btn btn-primary" onclick="nextFromInfo()">下一步</button>';
+      html += '<button class="btn btn-ghost" style="margin-top:10px" onclick="state.createStep=1;renderCreate()">上一步</button>';
+      html += '</div>';
+    } else if (s === 3){
+      html += '<div class="card">';
+      html += '<div class="tip-box">支持粘贴文本，或选择微信里的 TXT 文件。建议 2000 字以上效果更好，导入前请去掉无关的隐私信息。</div>';
+      html += '<div class="help-link" onclick="go(\'help\')">如何导出聊天记录？</div>';
+      html += '<textarea id="fText" placeholder="把聊天记录粘贴到这里…" style="min-height:150px">'+state.createText+'</textarea>';
+      html += `<div class="meta-row"><span id="fileName">${state.fileName || ''}</span><span>${state.createText.length} / 20000 字</span></div>`;
+      const st = parseLog(state.createText);
+      if (st.stats.total){
+        html += '<div class="stats-panel">';
+        html += '<div class="stats-row">';
+        html += '<div class="stat"><b>'+st.stats.total+'</b><span>条消息</span></div>';
+        html += '<div class="stat"><b>'+(st.stats.transfers + st.stats.redpackets)+'</b><span>转账/红包</span></div>';
+        html += '<div class="stat"><b>'+st.stats.topHour+' 点</b><span>活跃时段</span></div>';
+        html += '</div>';
+        if (st.topics.length) html += '<div class="stats-topics">'+st.topics.map(t => '<span class="tag">'+t+'</span>').join('')+'</div>';
+        if (st.transferRecords.length){
+          html += '<div class="stats-records"><div class="record-title">转账 / 红包记录</div>';
+          st.transferRecords.forEach(r => { html += '<div class="record-item">'+r.sender+'：'+r.content+'</div>'; });
+          html += '</div>';
+        }
+        html += '<div class="stats-note">已自动剔除转账/红包/系统消息，人格分析只使用有效对话正文。</div>';
+        html += '</div>';
+      }
+      html += '<button class="btn btn-ghost" onclick="simulateChooseTxt()">从微信选择 TXT 文件</button>';
+      html += '<button class="btn btn-ghost" style="margin-top:10px" onclick="loadSample()">填入示例素材体验</button>';
+      html += '<button class="btn btn-primary" style="margin-top:12px" onclick="startAnalyze()">开始分析并生成人格画像</button>';
+      html += '<button class="btn btn-ghost" style="margin-top:10px" onclick="state.createStep=2;renderCreate()">上一步</button>';
+      html += '</div>';
+    } else if (s === 4){
+      html += '<div class="card analyzing"><div class="a-emoji">✨</div><h3 id="analyzeText">读取素材…</h3><p class="sub">正在根据素材提炼语气与共同记忆，大约需要 10~30 秒</p></div>';
+    } else if (s === 5 && createdRole){
+      const pAv = createdRole.avatarData ? '<img class="pe img" src="'+createdRole.avatarData+'">' : '<div class="pe">'+createdRole.emoji+'</div>';
+      html += '<div class="card"><div class="persona-head">'+pAv+'<h3>'+createdRole.name+'</h3><span class="ai-tag">AI 生成 · 非真实人物</span></div>';
+      html += '<div class="p-summary">'+createdRole.summary+'</div>';
+      html += '<div>' + createdRole.tags.map(t => `<span class="tag">${t}</span>`).join('') + '</div>';
+      html += '<div class="p-line"><span class="k">语气</span><span>'+createdRole.tone+'</span></div>';
+      html += '<div class="p-line"><span class="k">口头禅/用词</span><span>'+createdRole.speech+'</span></div>';
+      html += '<div class="p-line"><span class="k">TA 在意的事</span><span>'+createdRole.values+'</span></div>';
+      html += '<div style="margin-top:12px"><div class="label">记得的事</div>';
+      createdRole.memories.forEach(m => { html += `<div class="mem-item">${m}</div>`; });
+      html += '</div>';
+      html += '<div style="margin-top:14px"><div class="label">TA 会这样开场</div><div class="opening-bubble">'+createdRole.opening+'</div></div>';
+      html += '</div>';
+      html += '<div class="cta"><button class="btn btn-primary" onclick="openChat(\''+createdRole.id+'\')">开始对话</button><button class="btn btn-ghost" onclick="go(\'roles\')">返回角色列表</button></div>';
+    }
+    $('create-body').innerHTML = html;
+    if (s === 2){
+      const n = $('fName'), b = $('fBio');
+      n.oninput = () => state.createForm.name = n.value;
+      b.oninput = () => state.createForm.bio = b.value;
+    }
+    if (s === 3){
+      const t = $('fText');
+      t.oninput = () => {
+        state.createText = t.value.slice(0, 20000);
+        t.value = state.createText;
+        const meta = t.parentElement.querySelector('.meta-row');
+        meta.lastElementChild.textContent = state.createText.length + ' / 20000 字';
+      };
+    }
+  }
+
+  function toggleTag(tag){
+    const i = state.createTags.indexOf(tag);
+    if (i >= 0) state.createTags.splice(i, 1);
+    else if (state.createTags.length < 3) state.createTags.push(tag);
+    else { toast('最多选 3 个'); return; }
+    renderCreate();
+  }
+
+  function nextFromInfo(){
+    const n = $('fName');
+    if (n) state.createForm.name = n.value.trim();
+    const b = $('fBio');
+    if (b) state.createForm.bio = b.value.trim();
+    if (!state.createForm.name){ toast('给 TA 起个名字吧'); return; }
+    state.createStep = 3;
+    renderCreate();
+  }
+
+  function ensureAuth(cb){
+    if (state.authAgreed){ cb(); return; }
+    showModal({
+      title: '上传前，请确认',
+      okText: '我已了解并同意',
+      cancelText: '暂不上传',
+      body: '<div>1. 我确认这些聊天记录来源合法，且仅用于个人回忆与生成我的专属 AI 角色；</div><div>2. 我理解所有角色均由 AI 虚拟生成，不代表任何真实人物；</div><div>3. 我的数据仅保存在本人账户下，不会被用于任何通用模型训练；</div><div>4. 我可以在「数据管理」中随时一键彻底删除。</div>',
+      onOk: () => { state.authAgreed = true; cb(); }
+    });
+  }
+
+  function simulateChooseTxt(){
+    ensureAuth(() => {
+      state.createText = SAMPLE;
+      state.fileName = '聊天记录.txt';
+      toast('已导入 聊天记录.txt');
+      renderCreate();
+    });
+  }
+
+  function loadSample(){
+    ensureAuth(() => {
+      state.createText = SAMPLE;
+      state.fileName = '示例素材.txt';
+      toast('已填入示例素材');
+      renderCreate();
+    });
+  }
+
+  function pickRoleAvatar(){
+    const f = $('fRoleAvatar');
+    if (!f) return;
+    f.onchange = () => {
+      const file = f.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        state.createForm.avatarData = e.target.result;
+        renderCreate();
+      };
+      reader.readAsDataURL(file);
+    };
+    f.click();
+  }
+
+  function startAnalyze(){
+    if (state.createText.trim().length < 50){ toast('素材有点少，建议至少 50 字'); return; }
+    state.createStep = 4;
+    renderCreate();
+    const steps = ['读取素材…','提取语气…','整理共同记忆…','生成人格画像…'];
+    let i = 0;
+    analyzeTimer = setInterval(() => {
+      i = (i + 1) % steps.length;
+      const el = $('analyzeText');
+      if (el) el.textContent = steps[i];
+    }, 750);
+    setTimeout(finishAnalyze, 2900);
+  }
+
+  function finishAnalyze(){
+    clearInterval(analyzeTimer);
+    const name = state.createForm.name.trim() || '小满';
+    const tags = state.createTags.length ? state.createTags.slice() : ['温柔细腻','记得小事','有点毒舌'];
+    const tone = state.createForm.tone || '简短微信风';
+    const role = {
+      id: 'r' + Date.now(),
+      name, emoji: state.createForm.emoji || '🌻',
+      avatarData: state.createForm.avatarData || '',
+      tags,
+      summary: '根据你授权上传的素材，我记住了你们的聊天节奏与共同回忆。',
+      tone: tone === '简短微信风' ? '句子短、口语化，微信式聊天' : (tone === '细腻话痨' ? '会多聊几句，关心细节' : '话少但句句接得住'),
+      speech: '口头禅：' + (state.createForm.bio ? '从你填的人设里来' : '"嗯""然后呢""真的假的"'),
+      values: '在意你的日常小事，记住你们的约定',
+      opening: state.createForm.bio ? state.createForm.bio + '，今天想聊点什么？' : '在忙什么呢，今天过得怎么样？',
+      memories: ['你说过的话我都记得','上回约好的事情还没兑现','你最近在忙一件重要的事'],
+      messages: []
+    };
+    state.roles.unshift(role);
+    createdRole = role;
+    state.currentRole = role.id;
+    state.createStep = 5;
+    renderCreate();
+  }
+
+  /* ---------- 角色列表 ---------- */
+  function renderRoles(){
+    const box = $('roles-body');
+    if (!state.roles.length){
+      box.innerHTML = '<div class="empty-box"><div class="e-emoji">🌱</div><div>还没有角色</div><p class="sub">上传聊天记录，生成第一位懂你的 AI 伙伴</p><button class="btn btn-primary" style="width:auto;padding:10px 30px" onclick="go(\'create\')">创建第一个角色</button><div class="ad-placeholder">Banner 广告位（预留）</div></div>';
+      return;
+    }
+    let html = '';
+    state.roles.forEach(r => {
+      html += '<div class="card role-card">';
+      const av = r.avatarData ? '<img class="role-emoji img" src="'+r.avatarData+'">' : '<div class="role-emoji">'+r.emoji+'</div>';
+      html += '<div class="head">'+av+'<div><h3>'+r.name+'</h3><div class="meta">'+r.memories.length+' 条记忆 · AI 生成角色</div></div></div>';
+      html += '<div class="summary">'+r.summary+'</div>';
+      html += '<div style="margin-top:8px">' + r.tags.map(t => `<span class="tag">${t}</span>`).join('') + '</div>';
+      html += '<div class="role-actions"><button class="btn btn-primary" onclick="openChat(\''+r.id+'\')">进入对话</button><button class="btn btn-danger" onclick="confirmDeleteRole(\''+r.id+'\')">删除</button></div>';
+      html += '</div>';
+    });
+    html += '<button class="btn btn-ghost" onclick="go(\'create\')" style="margin-top:6px">＋ 创建新角色</button>';
+    html += '<div class="ad-placeholder">Banner 广告位（预留）</div>';
+    box.innerHTML = html;
+  }
+
+  function confirmDeleteRole(id){
+    const r = state.roles.find(x => x.id === id);
+    showModal({
+      title: '删除角色',
+      okText: '删除',
+      cancelText: '取消',
+      danger: true,
+      body: `删除「${r.name}」将同时清除人格画像与全部对话，且不可恢复。`,
+      onOk: () => {
+        state.roles = state.roles.filter(x => x.id !== id);
+        if (state.currentRole === id) state.currentRole = null;
+        toast('已删除');
+        renderRoles();
+      }
+    });
+  }
+
+  /* ---------- 聊天 ---------- */
+  function getRole(){ return state.roles.find(r => r.id === state.currentRole) || state.roles[0] || null; }
+
+  function openChat(id){
+    state.currentRole = id;
+    state.typing = false;
+    go('chat');
+  }
+
+  function switchTheme(){
+    const order = ['warm','dark','mint'];
+    const names = { warm:'暖阳', dark:'深空', mint:'薄荷' };
+    state.theme = order[(order.indexOf(state.theme) + 1) % 3];
+    $('page-chat').className = 'page active theme-' + state.theme;
+    $('themeBtn').textContent = names[state.theme];
+  }
+
+  function fmtTime(){
+    const d = new Date();
+    const p = n => (n < 10 ? '0' + n : '' + n);
+    return p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  function renderChat(){
+    const role = getRole();
+    if (!role) return;
+    state.currentRole = role.id;
+    $('chat-emoji').textContent = role.emoji;
+    $('chat-name').textContent = role.name;
+    $('chat-usage').textContent = state.member ? '会员 · 500次/日' : '今日 ' + state.usageLeft + '/20';
+    $('page-chat').className = 'page active theme-' + state.theme;
+    $('themeBtn').textContent = ({warm:'暖阳',dark:'深空',mint:'薄荷'})[state.theme];
+    const avImg = $('chat-avatar');
+    const avText = $('chat-emoji');
+    if (role.avatarData){
+      avImg.src = role.avatarData;
+      avImg.style.display = '';
+      avText.style.display = 'none';
+    } else {
+      avImg.style.display = 'none';
+      avText.style.display = '';
+    }
+    const aiAvatar = role.avatarData ? '<img class="avatar img" src="'+role.avatarData+'">' : '<div class="avatar">'+role.emoji+'</div>';
+
+    const box = $('chat-msgs');
+    let html = '';
+    if (!role.messages.length){
+      html += '<div class="opening-card"><div class="opening-bubble">'+role.opening+'</div><div class="qt">和 TA 打个招呼吧</div><div class="quick-chips">';
+      ['最近过得怎么样？','还记得我们上次聊的事吗？','讲个今天的小事给我听吧'].forEach(q => {
+        html += `<span class="quick-chip" onclick="quickSend('${q}')">${q}</span>`;
+      });
+      html += '</div></div>';
+    }
+    role.messages.forEach((m, idx) => {
+      html += '<div class="msg-row ' + (m.s === 'user' ? 'user' : 'ai') + '">';
+      if (m.s === 'ai') html += aiAvatar;
+      html += '<div class="bubble-wrap"><div class="bubble">';
+      if (m.type === 'transfer'){
+        html += '<div class="transfer-card"><div class="transfer-title">微信转账</div><div class="transfer-amount">'+m.t+'</div><div class="transfer-sub">模拟互动 · 不涉及真实资金</div></div>';
+      } else if (m.type === 'redpacket'){
+        html += '<div class="redpacket-card"><div class="redpacket-title">🧧 微信红包</div><div class="redpacket-sub">'+m.t+'</div></div>';
+      } else {
+        html += m.t;
+      }
+      html += '</div><div class="msg-meta"><span>'+m.m+'</span><button class="mem-btn" onclick="saveMemory('+idx+')">☆ 存记忆</button></div></div>';
+      if (m.s === 'user') html += state.myAvatar ? '<img class="avatar u img" src="'+state.myAvatar+'">' : '<div class="avatar u">我</div>';
+      html += '</div>';
+    });
+    if (state.typing){
+      html += '<div class="msg-row ai">'+aiAvatar+'<div class="bubble typing-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+    }
+    if (state.usageLeft <= 0 && !state.member){
+      html += '<div class="limit-banner"><p>今日免费对话次数已用完，明天再来，或申请体验会员</p><div class="limit-actions"><button class="btn btn-primary" style="flex:1;padding:9px 0;font-size:13px;margin:0" onclick="go(\'vip\')">申请体验</button></div></div>';
+    }
+    html += '<div style="height:10px"></div>';
+    box.innerHTML = html;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function quickSend(q){
+    const input = $('chat-input');
+    input.value = q;
+    sendChat();
+  }
+
+  function sendChat(){
+    const input = $('chat-input');
+    const text = input.value.trim();
+    if (!text || state.typing) return;
+    if (state.usageLeft <= 0 && !state.member){
+      toast('今日免费次数已用完');
+      return;
+    }
+    const role = getRole();
+    if (!role) return;
+    input.value = '';
+    role.messages.push({ s:'user', t:text, m:fmtTime() });
+    state.typing = true;
+    renderChat();
+    setTimeout(() => {
+      state.typing = false;
+      if (!state.member) state.usageLeft = Math.max(0, state.usageLeft - 1);
+      role.messages.push({ s:'ai', t:pickReply(text), m:fmtTime() });
+      renderChat();
+    }, 1700);
+  }
+
+  function openPlusMenu(){
+    $('plusMenu').classList.toggle('hidden');
+  }
+
+  function sendSpecial(type, amt){
+    $('plusMenu').classList.add('hidden');
+    const role = getRole();
+    if (!role || state.typing) return;
+    if (state.usageLeft <= 0 && !state.member){ toast('今日免费次数已用完'); return; }
+    const display = type === 'transfer' ? '转账 ¥' + amt : '恭喜发财，大吉大利';
+    role.messages.push({ s:'user', type, t: display, m: fmtTime() });
+    state.typing = true;
+    renderChat();
+    setTimeout(() => {
+      state.typing = false;
+      if (!state.member) state.usageLeft = Math.max(0, state.usageLeft - 1);
+      role.messages.push({
+        s:'ai',
+        t: type === 'transfer'
+          ? '怎么突然给我转账，是不是又偷偷加班了？心意收到，先帮你存着。'
+          : '谢谢你，心意收到啦，回头请你喝奶茶。',
+        m: fmtTime()
+      });
+      renderChat();
+    }, 1700);
+  }
+
+  function simulateReward(){
+    const o = $('adOverlay');
+    let left = 3;
+    $('adCount').textContent = left;
+    o.classList.add('show');
+    clearInterval(state._rewardTimer);
+    state._rewardTimer = setInterval(() => {
+      left -= 1;
+      if (left <= 0){
+        clearInterval(state._rewardTimer);
+        o.classList.remove('show');
+        state.usageLeft += 5;
+        renderChat();
+        toast('已恢复 5 次');
+      } else {
+        $('adCount').textContent = left;
+      }
+    }, 1000);
+  }
+
+  function closeAd(){
+    clearInterval(state._rewardTimer);
+    $('adOverlay').classList.remove('show');
+  }
+
+  function hideSplash(){
+    const o = $('splashOverlay');
+    if (o) o.classList.remove('show');
+  }
+
+  $('page-chat').addEventListener('click', (e) => {
+    const menu = $('plusMenu');
+    if (menu && !menu.contains(e.target) && !e.target.classList.contains('plus-btn')) menu.classList.add('hidden');
+  });
+
+  function saveMemory(idx){
+    const role = getRole();
+    const msg = role.messages[idx];
+    if (!msg) return;
+    showModal({
+      title: '补充记忆',
+      okText: '记住',
+      cancelText: '取消',
+      body: '把「'+msg.t.slice(0,20)+'…」存进角色记忆？角色之后会在聊天中自然提起。',
+      onOk: () => {
+        role.memories.push(msg.t.slice(0,30));
+        toast('已记住');
+      }
+    });
+  }
+
+  /* ---------- 我的 ---------- */
+  function renderProfile(){
+    const body = $('profile-body');
+    const vip = state.member;
+    const myAv = state.myAvatar
+      ? '<img class="user-avatar-lg img" src="' + state.myAvatar + '">'
+      : '<div class="user-avatar-lg">🧑</div>';
+    let html = '<div class="card user-row">';
+    html += '<div class="avatar-pick" onclick="pickMyAvatar()" title="点击更换我的头像">' + myAv + '</div>';
+    html += '<div><input class="nick-input" id="nickInput" placeholder="点击设置昵称" value="我" style="width:220px"></div>';
+    html += '<span class="badge" style="margin-left:auto">' + (vip ? '我记得会员' : '免费版') + '</span>';
+    html += '</div>';
+    html += '<input type="file" id="fMyAvatar" accept="image/*" style="display:none">';
+    html += '<div class="card member-card' + (vip ? ' vip' : '') + '">';
+    html += '<h3>' + (vip ? '我记得会员' : '免费版') + '</h3>';
+    html += '<div class="exp">' + (vip ? '有效期至 2027-08-09' : '今日对话 ' + state.usageLeft + ' / 20 次') + '</div>';
+    html += '<div class="bar"><i style="width:' + (vip ? 100 : Math.round(state.usageLeft/20*100)) + '%"></i></div>';
+    html += '<div class="sub" style="margin-top:8px">已创建角色 ' + state.roles.length + ' / ' + (vip ? 10 : 3) + ' 个</div>';
+    html += '</div>';
+    html += '<div class="card menu">';
+    html += '<div class="cell" onclick="go(\'vip\')"><span>会员中心</span><span class="ar">›</span></div>';
+    html += '<div class="cell" onclick="go(\'privacy\')"><span>数据与隐私</span><span class="ar">›</span></div>';
+    html += '<div class="cell" onclick="go(\'complaint\')"><span>侵权投诉与举报</span><span class="ar">›</span></div>';
+    html += '<div class="cell" onclick="go(\'about\')"><span>关于与合规</span><span class="ar">›</span></div>';
+    html += '</div>';
+    body.innerHTML = html;
+    const nick = $('nickInput');
+    if (nick) nick.oninput = () => {};
+  }
+
+  function pickMyAvatar(){
+    const f = $('fMyAvatar');
+    if (!f) return;
+    f.onchange = () => {
+      const file = f.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        state.myAvatar = e.target.result;
+        renderProfile();
+      };
+      reader.readAsDataURL(file);
+    };
+    f.click();
+  }
+
+  /* ---------- 会员 ---------- */
+  document.querySelectorAll('#planGrid .plan-card').forEach(c => c.onclick = () => {
+    state.planId = c.dataset.plan;
+    document.querySelectorAll('#planGrid .plan-card').forEach(x => x.classList.toggle('on', x === c));
+  });
+
+  function pay(){
+    showModal({
+      title:'申请已记录',
+      okText:'知道了',
+      body:'封闭测试期间不收取费用。体验资格将由运营白名单审核后发放。'
+    });
+  }
+
+  /* ---------- 数据删除 / 投诉 / 协议 ---------- */
+  function deleteAll(){
+    showModal({
+      title:'彻底删除全部数据',
+      okText:'继续',
+      cancelText:'取消',
+      danger: true,
+      body:'将删除你的全部角色、人格画像、记忆与对话记录，且不可恢复。',
+      onOk: () => {
+        showModal({
+          title:'最后确认',
+          okText:'确认删除',
+          cancelText:'取消',
+          danger: true,
+          body:'请再次确认：删除后所有 AI 角色将消失，且无法找回。',
+          onOk: () => {
+            state.roles = [];
+            state.currentRole = null;
+            state.member = false;
+            state.usageLeft = 20;
+            state.authAgreed = false;
+            toast('已彻底删除');
+            go('home');
+          }
+        });
+      }
+    });
+  }
+
+  document.querySelectorAll('#complaintTypes .chip').forEach(c => c.onclick = () => {
+    document.querySelectorAll('#complaintTypes .chip').forEach(x => x.classList.toggle('on', x === c));
+  });
+
+  function submitComplaint(){
+    const content = $('cContent').value.trim();
+    if (content.length < 5){ toast('请填写详细说明'); return; }
+    $('cRoleId').value = '';
+    $('cContent').value = '';
+    $('cContact').value = '';
+    toast('已提交');
+  }
+
+  const TERMS = {
+    user: {
+      title: '用户协议',
+      sections: [
+        ['1. 服务说明','「我记得」是一款自定义 AI 角色创建工具。用户可上传本人合法拥有的聊天记录素材，生成由 AI 虚拟生成的对话角色。所有角色均为 AI 生成内容，不代表任何真实人物。'],
+        ['2. 用户授权','用户承诺上传素材来源合法、拥有必要的使用权利，且仅用于个人用途。素材仅用于生成个人专属角色，不会用于任何通用模型训练。'],
+        ['3. 内容规范','用户不得上传或诱导生成违法违规、色情低俗、诱导自伤、赌博、封建迷信等内容。如发现违规内容，我们有权删除并视情况依法处置。'],
+        ['4. 数据与删除','用户可随时在「数据管理」中一键彻底删除全部数据，删除后不可恢复。'],
+        ['5. 未成年人保护','未成年人应在监护人指导下使用本服务。']
+      ]
+    },
+    privacy: {
+      title: '隐私政策',
+      sections: [
+        ['1. 我们收集的信息','你主动上传的聊天记录素材、角色昵称与形象、昵称与头像、对话内容、每日使用次数等必要信息。'],
+        ['2. 信息的用途','素材仅用于生成你的专属 AI 角色与人格画像；对话内容用于角色与你聊天时的上下文。所有数据不会被用于任何通用模型训练。'],
+        ['3. 存储与保护','数据存储在微信云开发环境中，按账户隔离；我们采用最小化收集与访问控制措施保护你的数据。'],
+        ['4. 删除权利','你可随时在「数据管理」中一键彻底删除全部数据；删除单个角色会同时清除其对话记录。'],
+        ['5. 未成年人','我们不会主动收集未成年人个人信息；未成年人请在监护人指导下使用。'],
+        ['6. 联系我们','如对隐私政策有任何疑问，可通过「侵权投诉与举报」页面或客服邮箱联系我们。']
+      ]
+    }
+  };
+
+  function renderTerms(){
+    const qp = new URLSearchParams(location.search);
+    const type = (location.hash.split('#')[1]) || qp.get('type') || 'user';
+    const doc = TERMS[type] || TERMS.user;
+    $('navTitle').textContent = doc.title;
+    let html = '<h3 style="font-size:18px;margin:0 0 14px">' + doc.title + '</h3>';
+    doc.sections.forEach(s => { html += '<h3>'+s[0]+'</h3><p>'+s[1]+'</p>'; });
+    $('terms-body').innerHTML = html;
+  }
+
+  /* 首屏渲染（支持 ?page=xxx 直达，便于截图与分享） */
+  const qp = new URLSearchParams(location.search);
+  if (qp.get('page')) location.hash = '#/' + qp.get('page');
+  if (qp.get('createStep')){
+    state.createStep = Number(qp.get('createStep')) || 1;
+    if (state.createStep === 3){
+      state.createText = SAMPLE;
+      state.fileName = '聊天记录.txt';
+    }
+  }
+  // 开屏广告（模拟）：每次会话首次进入展示，?splash=1 可强制展示
+  if (qp.get('splash') === '1' || !sessionStorage.getItem('jide_splash_seen')) {
+    sessionStorage.setItem('jide_splash_seen', '1');
+    let left = 3;
+    $('splashCount').textContent = left;
+    $('splashOverlay').classList.add('show');
+    const t = setInterval(() => {
+      left -= 1;
+      if (left <= 0){ clearInterval(t); hideSplash(); }
+      else $('splashCount').textContent = left;
+    }, 1000);
+  }
+  renderRoute();
+</script>
+</body>
+</html>
